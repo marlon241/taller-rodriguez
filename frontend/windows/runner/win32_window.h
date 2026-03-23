@@ -1,6 +1,4 @@
-git remote add origin https://github.com/marlon241/taller-rodriguez.git 
-git branch -M main
-git push -u origin main#ifndef RUNNER_WIN32_WINDOW_H_
+#ifndef RUNNER_WIN32_WINDOW_H_
 #define RUNNER_WIN32_WINDOW_H_
 
 #include <windows.h>
