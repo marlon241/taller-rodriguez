@@ -6,16 +6,16 @@ class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
   static final List<MenuItemModel> menuItems = [
-    MenuItemModel(label: 'Caja',        imagePath: 'assets/images/caja.png'),
-    MenuItemModel(label: 'Clientes',    imagePath: 'assets/images/clientes.png'),
-    MenuItemModel(label: 'Empleados',   imagePath: 'assets/images/empleados.png'),
-    MenuItemModel(label: 'Ofertas',     imagePath: 'assets/images/ofertas.png'),
-    MenuItemModel(label: 'Inventario',  imagePath: 'assets/images/inventario.png'),
-    MenuItemModel(label: 'Facturación', imagePath: 'assets/images/facturacion.png'),
-    MenuItemModel(label: 'Vehículos',   imagePath: 'assets/images/vehiculos.png'),
-    MenuItemModel(label: 'Reportes',    imagePath: 'assets/images/reportes.png'),
-    MenuItemModel(label: 'Proveedores', imagePath: 'assets/images/proveedores.png'),
-    MenuItemModel(label: 'Mi perfil',   imagePath: 'assets/images/mi_perfil.png'),
+    MenuItemModel(label: 'Caja',        imagePath: '../../assets/sidebar_false/caja.png'),
+    MenuItemModel(label: 'Clientes',    imagePath: '../../assets/sidebar_false/cliente.png'),
+    MenuItemModel(label: 'Empleados',   imagePath: '../../assets/sidebar_false/empleados.png'),
+    MenuItemModel(label: 'Ofertas',     imagePath: '../../assets/sidebar_false/ofertas.png'),
+    MenuItemModel(label: 'Inventario',  imagePath: '../../assets/sidebar_false/inventario.png'),
+    MenuItemModel(label: 'Facturación', imagePath: '../../assets/sidebar_false/facturacion.png'),
+    MenuItemModel(label: 'Vehículos',   imagePath: '../../assets/sidebar_false/coche.png'),
+    MenuItemModel(label: 'Reportes',    imagePath: '../../assets/sidebar_false/reportes.png'),
+    MenuItemModel(label: 'Proveedores', imagePath: '../../assets/sidebar_false/proveedores.png'),
+    MenuItemModel(label: 'Mi perfil',   imagePath: '../../assets/sidebar_false/perfil.png'),
   ];
 
   @override
@@ -33,9 +33,9 @@ class HomeScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
-                    'assets/images/logo.png',
-                    width: 40,
-                    height: 40,
+                    '../../assets/logo_taller.png',
+                    width: 50,
+                    height: 50,
                     errorBuilder: (_, __, ___) => const Icon(
                       Icons.settings,
                       size: 40,
@@ -57,14 +57,14 @@ class HomeScreen extends StatelessWidget {
             ),
 
            
-       Expanded(
+      Expanded(
   child: Center(
     child: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 1000), // 👈 límite del ancho
+      constraints: const BoxConstraints(maxWidth: 1000),
       child: GridView.builder(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 4, // 👈 más columnas en escritorio
+          crossAxisCount: 4, 
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
           childAspectRatio: 1,

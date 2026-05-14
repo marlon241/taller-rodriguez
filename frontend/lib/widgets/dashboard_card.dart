@@ -49,8 +49,8 @@ class _DashboardCardState extends State<DashboardCard> {
             children: [
               Image.asset(
                 widget.item.imagePath,
-                width: 56,
-                height: 56,
+                width: _hovered ? 100 : 80,
+                height: _hovered ? 100 : 80,
                 errorBuilder: (_, __, ___) => const Icon(
                   Icons.image_not_supported_outlined,
                   size: 56,
@@ -61,9 +61,9 @@ class _DashboardCardState extends State<DashboardCard> {
               Text(
                 widget.item.label,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF2C2C2C),
+                  fontSize: 25,
+                  fontFamily: 'Itim',
+                  color: Color.fromARGB(255, 0, 0, 0), 
                 ),
               ),
             ],
