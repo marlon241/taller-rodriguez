@@ -25,7 +25,6 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-           
             Container(
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 24),
               color: const Color(0xFFF0F0F0),
@@ -71,7 +70,7 @@ class HomeScreen extends StatelessWidget {
         ),
         itemCount: menuItems.length,
         itemBuilder: (context, index) {
-          return DashboardCard(item: menuItems[index]);
+          return DashboardCard(item: menuItems[index], ruta: '/${menuItems[index].label.toLowerCase().replaceAll(' ', '_')}');
         },
       ),
     ),

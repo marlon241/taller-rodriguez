@@ -3,8 +3,9 @@ import '../models/menu_item_model.dart';
 
 class DashboardCard extends StatefulWidget {
   final MenuItemModel item;
+  final String ruta;
 
-  const DashboardCard({super.key, required this.item});
+  const DashboardCard({super.key, required this.item, required this.ruta});
 
   @override
   State<DashboardCard> createState() => _DashboardCardState();
@@ -18,6 +19,10 @@ class _DashboardCardState extends State<DashboardCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+      onTap: () {
+          Navigator.pushNamed(context, widget.ruta);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
@@ -41,8 +46,8 @@ class _DashboardCardState extends State<DashboardCard> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-           
             debugPrint('Tapped: ${widget.item.label}');
+            Navigator.pushNamed(context, widget.ruta);  
           },
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -70,6 +75,6 @@ class _DashboardCardState extends State<DashboardCard> {
           ),
         ),
       ),
-    );
+    ));
   }
 }

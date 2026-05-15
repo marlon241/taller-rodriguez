@@ -6,94 +6,139 @@ class Sidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(children: [
-    SizedBox(width: 8,),
-    Container(
-      width: 180,
-      height: double.infinity,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-            Image.asset(  
-              'assets/logo_taller.png',
-              width: 130,
-              height: 130,
-            ),
-            const SizedBox(height: 5),
-            SidebarElement(
-              nombre: 'Vehiculos taller',
-              icono: 'coche',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/vehiculos',
-              ruta: '/vehiculos',
-            ),
-            const SizedBox(height: 5),
-            SidebarElement(
-              nombre: 'Caja',
-              icono: 'caja',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/caja',
-              ruta: '/caja',
-            ),
-            const SizedBox(height: 5),
-            SidebarElement(
-              nombre: 'Clientes',
-              icono: 'cliente',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/clientes',
-              ruta: '/clientes',
-            ),
-            const SizedBox(height: 5),
-            SidebarElement(
-              nombre: 'Ofertas',
-              icono: 'ofertas',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/ofertas',
-              ruta: '/ofertas',
-            ),
-            const SizedBox(height: 5),
-            SidebarElement(
-              nombre: 'Facturacion',
-              icono: 'facturacion',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/facturacion',
-              ruta: '/facturacion',
-            ),
-            const SizedBox(height: 5),
-            SidebarElement(
-              nombre: 'Inventario',
-              icono: 'inventario',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/inventario',
-              ruta: '/inventario',
-            ),
-            const SizedBox(height: 5),
-            SidebarElement(
-              nombre: 'Bodega',
-              icono: 'bodega',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/bodega',
-              ruta: '/bodega',
-            ),
-            const SizedBox(height: 5),
-            SidebarElement(
-              nombre: 'Proveedores',
-              icono: 'proveedores',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/proveedores',
-              ruta: '/proveedores',
-            ),
-            const SizedBox(height: 5),
-            SidebarElement(
-              nombre: 'Empleados',
-              icono: 'empleados',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/empleados',
-              ruta: '/empleados',
-            ),
-            const SizedBox(height: 15),
-            SidebarElement(
-              nombre: 'NombreUsuario',
-              icono: 'perfil',
-              seleccionado: ModalRoute.of(context)?.settings.name == '/perfil',
-              ruta: '/perfil',
-            ),
-        ],
-      ),
-    ),
+    final bool isWide = MediaQuery.of(context).size.width > 1000;
 
-    ],);
-    
+    // En móvil el sidebar se usa como Drawer, no como widget directo
+    return isWide ? _buildSidebar(context) : const SizedBox.shrink();
+  }
+
+  Widget _buildSidebar(BuildContext context) {
+    return Row(
+      children: [
+        const SizedBox(width: 5),
+        Container(
+          width: 180,
+          height: double.infinity,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/dashboard'),
+                  child: Image.asset(
+                    'assets/logo_taller.png',
+                    width: 130,
+                    height: 130,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 5),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      _item(context, 'Vehiculos taller', 'coche', '/vehiculos'),
+                      _item(context, 'Caja', 'caja', '/caja'),
+                      _item(context, 'Clientes', 'cliente', '/clientes'),
+                      _item(context, 'Ofertas', 'ofertas', '/ofertas'),
+                      _item(context, 'Facturacion', 'facturacion', '/facturacion'),
+                      _item(context, 'Inventario', 'inventario', '/inventario'),
+                      _item(context, 'Bodega', 'bodega', '/bodega'),
+                      _item(context, 'Proveedores', 'proveedores', '/proveedores'),
+                      _item(context, 'Empleados', 'empleados', '/empleados'),
+                      _item(context, 'Reportes', 'reportes', '/reportes'),
+                      const SizedBox(height: 10),
+                    ],
+                  ),
+                ),
+              ),
+              // Perfil siempre fijo abajo
+              SidebarElement(
+                nombre: 'NombreUsuario',
+                icono: 'perfil',
+                seleccionado: ModalRoute.of(context)?.settings.name == '/perfil',
+                ruta: '/perfil',
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _item(BuildContext context, String nombre, String icono, String ruta) {
+    return Column(
+      children: [
+        SidebarElement(
+          nombre: nombre,
+          icono: icono,
+          seleccionado: ModalRoute.of(context)?.settings.name == ruta,
+          ruta: ruta,
+        ),
+        const SizedBox(height: 5),
+      ],
+    );
+  }
+}
+
+class SidebarDrawerContent extends StatelessWidget {
+  const SidebarDrawerContent({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Drawer(
+      child: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 20),
+               child: MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => Navigator.pushNamed(context, '/dashboard'),
+                  child: Image.asset(
+                    'assets/logo_taller.png',
+                    width: 130,
+                    height: 130,
+                  ),
+                ),
+              ),
+            ),
+            // Items con scroll
+            Expanded(
+              child: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    _drawerItem(context, 'Vehiculos taller', 'coche', '/vehiculos'),
+                    _drawerItem(context, 'Caja', 'caja', '/caja'),
+                    _drawerItem(context, 'Clientes', 'cliente', '/clientes'),
+                    _drawerItem(context, 'Ofertas', 'ofertas', '/ofertas'),
+                    _drawerItem(context, 'Facturacion', 'facturacion', '/facturacion'),
+                    _drawerItem(context, 'Inventario', 'inventario', '/inventario'),
+                    _drawerItem(context, 'Bodega', 'bodega', '/bodega'),
+                    _drawerItem(context, 'Proveedores', 'proveedores', '/proveedores'),
+                    _drawerItem(context, 'Empleados', 'empleados', '/empleados'),
+                    _drawerItem(context, 'Reportes', 'reportes', '/reportes'),
+                  ],
+                ),
+              ),
+            ),
+            // Perfil fijo abajo
+            _drawerItem(context, 'NombreUsuario', 'perfil', '/perfil'),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _drawerItem(BuildContext context, String nombre, String icono, String ruta) {
+    return SidebarElement(
+      nombre: nombre,
+      icono: icono,
+      seleccionado: ModalRoute.of(context)?.settings.name == ruta,
+      ruta: ruta,
+    );
   }
 }
