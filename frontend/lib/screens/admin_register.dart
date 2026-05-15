@@ -13,13 +13,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Login',
-      home: const LoginPage(),
+      home: const registroAdmin(),
     );
   }
 }
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class registroAdmin extends StatelessWidget {
+  const registroAdmin({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -62,14 +62,20 @@ class LoginPage extends StatelessWidget {
               const SizedBox(height: 30),
 
               const Text(
-                "Inicio de sesión",
+                "Bienvenido, Administrador",
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const Text(
+                "Registre sus datos por favor",
+                style: TextStyle(
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 18),
 
               /// Usuario
               const Align(
@@ -79,9 +85,7 @@ class LoginPage extends StatelessWidget {
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
               ),
-
-              const SizedBox(height: 18),
-
+              const SizedBox(height: 6),
               TextField(
                 decoration: InputDecoration(
                   hintText: "Ingresa tu usuario",
@@ -92,7 +96,7 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 25),
+              const SizedBox(height: 18),
 
               /// Contraseña
               const Align(
@@ -103,12 +107,37 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 6),
 
               TextField(
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: "Ingresa tu contraseña",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 10),
+                ),
+              ),
+              
+              const SizedBox(height: 18),
+              /////////////////////////
+              ///
+              ///
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Confirmar su contraseña",
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+
+              const SizedBox(height: 6),
+
+              TextField(
+                obscureText: true,
+                decoration: InputDecoration(
+                  hintText: "Confirme su contraseña",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -131,7 +160,7 @@ class LoginPage extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    "Iniciar sesión",
+                    "Registrar Administrador",
                     style: TextStyle(fontSize: 16,
                     color : Colors.white,)
                   ),
