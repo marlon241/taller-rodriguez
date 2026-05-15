@@ -32,8 +32,8 @@ class _DashboardCardState extends State<DashboardCard> {
           boxShadow: [
             BoxShadow(
               color: _hovered
-                  ? Colors.black.withOpacity(0.15)
-                  : Colors.black.withOpacity(0.06),
+                  ? Colors.black.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.06),
               blurRadius: _hovered ? 16 : 8,
               offset: const Offset(0, 4),
             ),

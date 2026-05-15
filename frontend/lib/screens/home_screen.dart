@@ -15,7 +15,7 @@ class HomeScreen extends StatelessWidget {
     MenuItemModel(label: 'Vehículos',   imagePath: '../../assets/sidebar_false/coche.png'),
     MenuItemModel(label: 'Reportes',    imagePath: '../../assets/sidebar_false/reportes.png'),
     MenuItemModel(label: 'Proveedores', imagePath: '../../assets/sidebar_false/proveedores.png'),
-    MenuItemModel(label: 'Mi perfil',   imagePath: '../../assets/sidebar_false/perfil.png'),
+    MenuItemModel(label: 'Perfil',   imagePath: '../../assets/sidebar_false/perfil.png'),
   ];
 
   @override
@@ -55,7 +55,6 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
 
-           
       Expanded(
   child: Center(
     child: ConstrainedBox(

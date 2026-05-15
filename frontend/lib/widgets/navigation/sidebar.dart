@@ -16,7 +16,7 @@ class Sidebar extends StatelessWidget {
     return Row(
       children: [
         const SizedBox(width: 5),
-        Container(
+        SizedBox(
           width: 180,
           height: double.infinity,
           child: Column(
@@ -55,7 +55,7 @@ class Sidebar extends StatelessWidget {
               ),
               // Perfil siempre fijo abajo
               SidebarElement(
-                nombre: 'NombreUsuario',
+                nombre: 'Mi perfil',
                 icono: 'perfil',
                 seleccionado: ModalRoute.of(context)?.settings.name == '/perfil',
                 ruta: '/perfil',
@@ -125,7 +125,7 @@ class SidebarDrawerContent extends StatelessWidget {
               ),
             ),
             // Perfil fijo abajo
-            _drawerItem(context, 'NombreUsuario', 'perfil', '/perfil'),
+            _drawerItem(context, 'Mi perfil', 'perfil', '/perfil'),
             const SizedBox(height: 10),
           ],
         ),

@@ -13,13 +13,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Login',
-      home: const registroAdmin(),
+      home: const RegistroAdmin(),
     );
   }
 }
 
-class registroAdmin extends StatelessWidget {
-  const registroAdmin({super.key});
+class RegistroAdmin extends StatelessWidget {
+  const RegistroAdmin({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +34,7 @@ class registroAdmin extends StatelessWidget {
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               )
@@ -49,7 +49,6 @@ class registroAdmin extends StatelessWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
                   shape: BoxShape.circle,
                 image: DecorationImage(
       image: AssetImage('assets/logo_taller.png'), 
