@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'pages/login_pages.dart';
+import 'routes/app_routes.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,7 +12,8 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const LoginPage(),
+      initialRoute: AppRoutes.adminRegister,
+      routes: AppRoutes.routes,
     );
   }
 }

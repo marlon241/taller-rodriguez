@@ -1,5 +1,5 @@
 name: frontend
-description: "A new Flutter project."
+description: "Frontend para el taller de rodriguez"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -55,6 +55,13 @@ flutter:
   uses-material-design: true
   assets:
     - assets/logo_taller.png
+    - assets/
+
+  fonts:
+    - family: Itim
+      fonts:
+        - asset: assets/fonts/Itim-Regular.ttf
+          weight: 700
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

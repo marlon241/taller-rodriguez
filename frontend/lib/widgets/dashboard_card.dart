@@ -3,8 +3,9 @@ import '../models/menu_item_model.dart';
 
 class DashboardCard extends StatefulWidget {
   final MenuItemModel item;
+  final String ruta;
 
-  const DashboardCard({super.key, required this.item});
+  const DashboardCard({super.key, required this.item, required this.ruta});
 
   @override
   State<DashboardCard> createState() => _DashboardCardState();
@@ -18,6 +19,10 @@ class _DashboardCardState extends State<DashboardCard> {
     return MouseRegion(
       onEnter: (_) => setState(() => _hovered = true),
       onExit:  (_) => setState(() => _hovered = false),
+      child: GestureDetector(
+      onTap: () {
+          Navigator.pushNamed(context, widget.ruta);
+      },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         curve: Curves.easeOut,
@@ -27,8 +32,8 @@ class _DashboardCardState extends State<DashboardCard> {
           boxShadow: [
             BoxShadow(
               color: _hovered
-                  ? Colors.black.withOpacity(0.15)
-                  : Colors.black.withOpacity(0.06),
+                  ? Colors.black.withValues(alpha: 0.15)
+                  : Colors.black.withValues(alpha: 0.06),
               blurRadius: _hovered ? 16 : 8,
               offset: const Offset(0, 4),
             ),
@@ -41,16 +46,16 @@ class _DashboardCardState extends State<DashboardCard> {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-           
             debugPrint('Tapped: ${widget.item.label}');
+            Navigator.pushNamed(context, widget.ruta);  
           },
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Image.asset(
                 widget.item.imagePath,
-                width: 56,
-                height: 56,
+                width: _hovered ? 100 : 80,
+                height: _hovered ? 100 : 80,
                 errorBuilder: (_, __, ___) => const Icon(
                   Icons.image_not_supported_outlined,
                   size: 56,
@@ -61,15 +66,15 @@ class _DashboardCardState extends State<DashboardCard> {
               Text(
                 widget.item.label,
                 style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF2C2C2C),
+                  fontSize: 25,
+                  fontFamily: 'Itim',
+                  color: Color.fromARGB(255, 0, 0, 0), 
                 ),
               ),
             ],
           ),
         ),
       ),
-    );
+    ));
   }
 }
