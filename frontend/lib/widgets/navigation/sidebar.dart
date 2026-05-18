@@ -44,7 +44,6 @@ class Sidebar extends StatelessWidget {
                       _item(context, 'Ofertas', 'ofertas', '/ofertas'),
                       _item(context, 'Facturacion', 'facturacion', '/facturacion'),
                       _item(context, 'Inventario', 'inventario', '/inventario'),
-                      _item(context, 'Bodega', 'bodega', '/bodega'),
                       _item(context, 'Proveedores', 'proveedores', '/proveedores'),
                       _item(context, 'Empleados', 'empleados', '/empleados'),
                       _item(context, 'Reportes', 'reportes', '/reportes'),

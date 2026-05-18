@@ -34,14 +34,8 @@ class _OfertasScreenState extends State<OfertasScreen> {
     final bool isWide = MediaQuery.of(context).size.width > 1000;
 
     return Scaffold(
+      appBar: isWide ? null : AppBar(title: const Text('Ofertas')),
       drawer: isWide ? null : const SidebarDrawerContent(),
-      appBar: isWide
-          ? null
-          : AppBar(
-              title: const Text('Ofertas', style: TextStyle(fontFamily: 'Itim')),
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
       backgroundColor: const Color(0xFFF8F9FA),
       body: Row(
         children: [
