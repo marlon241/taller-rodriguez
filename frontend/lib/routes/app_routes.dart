@@ -9,6 +9,7 @@ import '../pages/ofertas.dart';
 import '../pages/factura.dart';
 import '../pages/inventario.dart';
 import '../pages/caja.dart';
+import '../pages/empleados.dart';
 
 
 class AppRoutes {
@@ -21,6 +22,7 @@ class AppRoutes {
   static const String facturacion = '/factura';
   static const String inventario = '/inventario';
   static const String caja = '/caja';
+  static const String empleados = '/empleados';
 
   static Map<String, WidgetBuilder> get routes => {
     adminRegister: (context) => const RegistroAdmin(),
@@ -32,5 +34,6 @@ class AppRoutes {
     facturacion: (context) => const FacturacionScreen(), //
     inventario: (context) => const InventarioPage(),
     caja: (context) => const CajaPage(),
+    empleados: (context) => const EmpleadosPage(),
   };
 }
