@@ -8,6 +8,8 @@ import '../screens/admin_register.dart';
 import '../pages/perfil.dart';
 import '../pages/ofertas.dart';
 import '../pages/factura.dart';
+import '../pages/inventario.dart';
+
 
 class AppRoutes {
   static const String clientes = '/clientes';
@@ -17,6 +19,7 @@ class AppRoutes {
   static const String perfil = '/perfil';
   static const String ofertas = '/ofertas';
   static const String factura = '/factura';
+  static const String inventario = '/inventario';
 
   static Map<String, WidgetBuilder> get routes => {
     adminRegister: (context) => const RegistroAdmin(),
@@ -26,5 +29,6 @@ class AppRoutes {
     perfil: (context) => const PerfilPage(),
     ofertas: (context) => const OfertasScreen(),
     factura: (context) => const FacturacionScreen(), //
+    inventario: (context) => const InventarioPage(),
   };
 }
