@@ -224,7 +224,7 @@ class _CajaPageState extends State<CajaPage> {
   }
 
   void _verHistorial() {
-    // TODO (navegación): ir a la pantalla de historial de turnos
+    Navigator.pushNamed(context, '/historialTurnos');
   }
 }
 
