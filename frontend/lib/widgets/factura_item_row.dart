@@ -1,6 +1,8 @@
+
 import 'package:flutter/material.dart';
 
 class FacturaItemRow extends StatelessWidget {
+  final int id;
   final int cantidad;
   final String nombre;
   final String tipo;
@@ -8,6 +10,7 @@ class FacturaItemRow extends StatelessWidget {
 
   const FacturaItemRow({
     super.key,
+    required this.id,
     required this.cantidad,
     required this.nombre,
     required this.tipo,
@@ -16,68 +19,71 @@ class FacturaItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isServicio = tipo.toLowerCase() == "servicio";
-
+    final bool isServicio = tipo == "Servicio";
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
         border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
       ),
       child: Row(
         children: [
+         
+          Expanded(
+            flex: 1,
+            child: Text(
+              "#$id",
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600),
+            ),
+          ),
+          
           Expanded(
             flex: 2,
             child: Text(
-              cantidad.toString(),
+              "$cantidad",
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 13),
+              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
             ),
           ),
+         
           Expanded(
             flex: 4,
-            child: Text(
-              nombre,
-              style: const TextStyle(fontSize: 13),
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
+            child: Text(nombre, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis, maxLines: 1),
           ),
+         
           Expanded(
             flex: 3,
             child: Center(
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: isServicio ? Colors.orange.shade100 : Colors.blue.shade100,
+                  color: isServicio ? Colors.orange.shade50 : Colors.blue.shade50,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   tipo,
-                  textAlign: TextAlign.center,
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
                   style: TextStyle(
-                    color: isServicio ? Colors.orange.shade800 : Colors.blue.shade800,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    fontSize: 12,
+                    color: isServicio ? Colors.orange.shade700 : Colors.blue.shade700,
                   ),
                 ),
               ),
             ),
           ),
+         
           Expanded(
             flex: 2,
             child: Text(
-              '\$${precio.toStringAsFixed(2)}',
+              "\$${precio.toStringAsFixed(2)}",
               textAlign: TextAlign.right,
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
             ),
           ),
+          
+          const SizedBox(width: 8),
           SizedBox(
-            width: 32,
+            width: 24,
             child: IconButton(
               padding: EdgeInsets.zero,
               icon: const Icon(Icons.delete_outline, color: Colors.red, size: 18),
