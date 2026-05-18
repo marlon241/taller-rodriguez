@@ -24,7 +24,7 @@ class AppRoutes {
     clientes: (context) => const ClientesPage(),
     home: (context) => const HomeScreen(),
     perfil: (context) => const PerfilPage(),
-    ofertas: (context) => const OfertasScreen(), //
-    factura: (context) => const FacturacionScreen(),
+    ofertas: (context) => const OfertasScreen(),
+    factura: (context) => const FacturacionScreen(), //
   };
 }
