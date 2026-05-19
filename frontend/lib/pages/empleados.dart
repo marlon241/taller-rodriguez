@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/widgets/navigation/sidebar.dart';
 import 'package:frontend/widgets/inputs/busqueda.dart';
+import 'package:frontend/widgets/modals/agregar_empleado_modal.dart';
+import 'package:frontend/widgets/modals/exito_modal.dart';
 
 class EmpleadosPage extends StatefulWidget {
   const EmpleadosPage({super.key});
@@ -538,8 +540,11 @@ class _AgregarEmpleadoButtonState extends State<_AgregarEmpleadoButton> {
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
         onTap: () {
-          // TODO (navegación): abrir modal/pantalla de agregar empleado
-        },
+  showDialog(
+    context: context,
+    builder: (context) => const AgregarEmpleadoModal(),
+  );
+},
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: widget.isWide ? 400 : double.infinity,
