@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:frontend/widgets/navigation/sidebar.dart';
 import 'package:frontend/widgets/inputs/busqueda.dart';
 import 'package:frontend/widgets/inputs/select.dart';
+import 'package:frontend/widgets/modals/agregar_producto_modal.dart';
+import 'package:frontend/widgets/modals/entrada_stock_modal.dart';
+import 'package:frontend/widgets/modals/salida_stock_modal.dart';
+import 'package:frontend/widgets/modals/editar_producto_modal.dart';
 
 class InventarioPage extends StatefulWidget {
   const InventarioPage({super.key});
@@ -15,10 +19,9 @@ class _InventarioPageState extends State<InventarioPage> {
   String? _filtroProducto;
   String? _filtroProveedor;
 
-  // Datos de ejemplo — reemplaza con tus datos reales
   final List<Map<String, String>> _productos = [
     {
-      'id': '2',
+      'id': '1',
       'producto': 'Bujia 10W-40',
       'stock': '20',
       'compra': '\$5.00',
@@ -29,12 +32,12 @@ class _InventarioPageState extends State<InventarioPage> {
     },
     {
       'id': '2',
-      'producto': 'Bujia 10W-40',
-      'stock': '20',
-      'compra': '\$5.00',
-      'venta': '\$8.00',
-      'proveedor': 'Proveedor B',
-      'descripcion': 'Bujia de encendido',
+      'producto': 'Aceite de caja',
+      'stock': '15',
+      'compra': '\$10.00',
+      'venta': '\$15.00',
+      'proveedor': 'Proveedor A',
+      'descripcion': 'Aceite para caja',
       'clasificacion': 'Lubricantes',
     },
   ];
@@ -63,7 +66,6 @@ class _InventarioPageState extends State<InventarioPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Título (solo en modo wide)
                   if (isWide)
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 25),
@@ -78,11 +80,9 @@ class _InventarioPageState extends State<InventarioPage> {
                     ),
                   if (isWide) const SizedBox(height: 20),
 
-                  // Barra de búsqueda y filtros
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: isWide
-                        // ── Modo escritorio: todo en fila ──
                         ? Row(
                             children: [
                               Expanded(
@@ -96,30 +96,18 @@ class _InventarioPageState extends State<InventarioPage> {
                               FilterDropdown(
                                 label: 'Filtrar productos:',
                                 value: _filtroProducto,
-                                options: const [
-                                  'Lubricantes',
-                                  'Frenos',
-                                  'Motor',
-                                  'Eléctrico'
-                                ],
-                                onChanged: (val) =>
-                                    setState(() => _filtroProducto = val),
+                                options: const ['Lubricantes', 'Frenos', 'Motor', 'Eléctrico'],
+                                onChanged: (val) => setState(() => _filtroProducto = val),
                               ),
                               const SizedBox(width: 12),
                               FilterDropdown(
                                 label: 'Filtrar por proveedor:',
                                 value: _filtroProveedor,
-                                options: const [
-                                  'Proveedor A',
-                                  'Proveedor B',
-                                  'Proveedor C'
-                                ],
-                                onChanged: (val) =>
-                                    setState(() => _filtroProveedor = val),
+                                options: const ['Proveedor A', 'Proveedor B', 'Proveedor C'],
+                                onChanged: (val) => setState(() => _filtroProveedor = val),
                               ),
                             ],
                           )
-                        // ── Modo móvil: apilado en columna ──
                         : Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
@@ -132,33 +120,21 @@ class _InventarioPageState extends State<InventarioPage> {
                               FilterDropdown(
                                 label: 'Filtrar productos:',
                                 value: _filtroProducto,
-                                options: const [
-                                  'Lubricantes',
-                                  'Frenos',
-                                  'Motor',
-                                  'Eléctrico'
-                                ],
-                                onChanged: (val) =>
-                                    setState(() => _filtroProducto = val),
+                                options: const ['Lubricantes', 'Frenos', 'Motor', 'Eléctrico'],
+                                onChanged: (val) => setState(() => _filtroProducto = val),
                               ),
                               const SizedBox(height: 10),
                               FilterDropdown(
                                 label: 'Filtrar por proveedor:',
                                 value: _filtroProveedor,
-                                options: const [
-                                  'Proveedor A',
-                                  'Proveedor B',
-                                  'Proveedor C'
-                                ],
-                                onChanged: (val) =>
-                                    setState(() => _filtroProveedor = val),
+                                options: const ['Proveedor A', 'Proveedor B', 'Proveedor C'],
+                                onChanged: (val) => setState(() => _filtroProveedor = val),
                               ),
                             ],
                           ),
                   ),
                   const SizedBox(height: 20),
 
-                  // Tabla (wide) o Tarjetas (móvil)
                   isWide
                       ? Container(
                           margin: const EdgeInsets.symmetric(horizontal: 25),
@@ -173,9 +149,7 @@ class _InventarioPageState extends State<InventarioPage> {
                               )
                             ],
                           ),
-                          child: _productos.isEmpty
-                              ? _buildEmptyState()
-                              : _buildTable(),
+                          child: _productos.isEmpty ? _buildEmptyState() : _buildTable(),
                         )
                       : _productos.isEmpty
                           ? _buildEmptyStateMobile()
@@ -187,9 +161,11 @@ class _InventarioPageState extends State<InventarioPage> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: Align(
-                      alignment:
-                          isWide ? Alignment.centerRight : Alignment.center,
-                      child: _AgregarButton(isWide: isWide),
+                      alignment: isWide ? Alignment.centerRight : Alignment.center,
+                      child: _AgregarButton(
+                        isWide: isWide,
+                        onTap: () => mostrarModalAgregarProducto(context),
+                      ),
                     ),
                   ),
                 ],
@@ -202,7 +178,7 @@ class _InventarioPageState extends State<InventarioPage> {
   }
 
   // ─────────────────────────────────────────
-  // MODO ESCRITORIO — tabla horizontal
+  // MODO ESCRITORIO
   // ─────────────────────────────────────────
 
   Widget _buildEmptyState() {
@@ -221,11 +197,7 @@ class _InventarioPageState extends State<InventarioPage> {
                 Text(
                   'NO SE HA AGREGADO NINGÚN PRODUCTO\nAL INVENTARIO',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.grey,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
-                  ),
+                  style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 1),
                 ),
               ],
             ),
@@ -247,8 +219,7 @@ class _InventarioPageState extends State<InventarioPage> {
           itemBuilder: (context, index) {
             final p = _productos[index];
             return Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
                   _cell(p['id']!),
@@ -263,12 +234,10 @@ class _InventarioPageState extends State<InventarioPage> {
                     child: Wrap(
                       spacing: 6,
                       children: [
-                        _accionBtn('Editar', Icons.edit, Colors.blue),
-                        _accionBtn(
-                            'Agregar Stock', Icons.add, Colors.green),
-                        _accionBtn(
-                            'Salida Stock', Icons.remove, Colors.orange),
-                        _accionBtn('Eliminar', Icons.delete, Colors.red),
+                        _accionBtn('Editar', Icons.edit, Colors.blue, () => mostrarModalEditarProducto(context)),
+                        _accionBtn('Agregar Stock', Icons.add, Colors.green, () => mostrarModalEntradaStock(context)),
+                        _accionBtn('Salida Stock', Icons.remove, Colors.orange, () => mostrarModalSalidaStock(context)),
+                        _accionBtn('Eliminar', Icons.delete, Colors.red, () {}),
                       ],
                     ),
                   ),
@@ -282,11 +251,7 @@ class _InventarioPageState extends State<InventarioPage> {
   }
 
   Widget _buildTableHeader() {
-    const style = TextStyle(
-      color: _headerColor,
-      fontWeight: FontWeight.bold,
-      fontSize: 13,
-    );
+    const style = TextStyle(color: _headerColor, fontWeight: FontWeight.bold, fontSize: 13);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: const BoxDecoration(
@@ -310,13 +275,11 @@ class _InventarioPageState extends State<InventarioPage> {
   }
 
   Widget _cell(String text) {
-    return Expanded(
-      child: Text(text, style: const TextStyle(fontSize: 13)),
-    );
+    return Expanded(child: Text(text, style: const TextStyle(fontSize: 13)));
   }
 
   // ─────────────────────────────────────────
-  // MODO MÓVIL — tarjetas apiladas
+  // MODO MÓVIL
   // ─────────────────────────────────────────
 
   Widget _buildEmptyStateMobile() {
@@ -330,11 +293,7 @@ class _InventarioPageState extends State<InventarioPage> {
           Text(
             'NO SE HA AGREGADO NINGÚN PRODUCTO\nAL INVENTARIO',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.grey,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 1,
-            ),
+            style: TextStyle(color: Colors.grey, fontWeight: FontWeight.bold, letterSpacing: 1),
           ),
         ],
       ),
@@ -365,54 +324,27 @@ class _InventarioPageState extends State<InventarioPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cabecera de la tarjeta
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: const BoxDecoration(
                   color: Color(0xFFFFF0F0),
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(12)),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(12)),
                 ),
                 child: Row(
                   children: [
-                    Text(
-                      '#${p['id']}',
-                      style: const TextStyle(
-                        color: _headerColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
-                      ),
-                    ),
+                    Text('#${p['id']}', style: const TextStyle(color: _headerColor, fontWeight: FontWeight.bold, fontSize: 13)),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        p['producto']!,
-                        style: const TextStyle(
-                          color: _headerColor,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      ),
+                      child: Text(p['producto']!, style: const TextStyle(color: _headerColor, fontWeight: FontWeight.bold, fontSize: 15)),
                     ),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: _headerColor,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: Text(
-                        p['clasificacion']!,
-                        style: const TextStyle(
-                            color: Colors.white, fontSize: 11),
-                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(color: _headerColor, borderRadius: BorderRadius.circular(6)),
+                      child: Text(p['clasificacion']!, style: const TextStyle(color: Colors.white, fontSize: 11)),
                     ),
                   ],
                 ),
               ),
-
-              // Cuerpo con los datos en columna
               Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
@@ -425,11 +357,8 @@ class _InventarioPageState extends State<InventarioPage> {
                   ],
                 ),
               ),
-
-              // Acciones en columna
               Padding(
-                padding:
-                    const EdgeInsets.only(left: 14, right: 14, bottom: 14),
+                padding: const EdgeInsets.only(left: 14, right: 14, bottom: 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -439,14 +368,10 @@ class _InventarioPageState extends State<InventarioPage> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _accionBtnMobile(
-                            'Editar', Icons.edit, Colors.blue),
-                        _accionBtnMobile(
-                            'Agregar Stock', Icons.add, Colors.green),
-                        _accionBtnMobile(
-                            'Salida Stock', Icons.remove, Colors.orange),
-                        _accionBtnMobile(
-                            'Eliminar', Icons.delete, Colors.red),
+                        _accionBtnMobile('Editar', Icons.edit, Colors.blue, () => mostrarModalEditarProducto(context)),
+                        _accionBtnMobile('Agregar Stock', Icons.add, Colors.green, () => mostrarModalEntradaStock(context)),
+                        _accionBtnMobile('Salida Stock', Icons.remove, Colors.orange, () => mostrarModalSalidaStock(context)),
+                        _accionBtnMobile('Eliminar', Icons.delete, Colors.red, () {}),
                       ],
                     ),
                   ],
@@ -466,61 +391,46 @@ class _InventarioPageState extends State<InventarioPage> {
         children: [
           SizedBox(
             width: 120,
-            child: Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+            child: Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey, fontWeight: FontWeight.w500)),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
+          Expanded(child: Text(value, style: const TextStyle(fontSize: 13))),
         ],
       ),
     );
   }
 
-Widget _accionBtn(String label, IconData icon, Color color) {
-  return _HoverButton(
-    onTap: () {},
-    color: color,
-    child: (isHovered) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: isHovered
-            ? color.withValues(alpha: 0.18)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(5),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: color),
-          const SizedBox(width: 4),
-          Text(label, style: TextStyle(fontSize: 12, color: color)),
-        ],
-      ),
-    ),
-  );
-}
-  Widget _accionBtnMobile(String label, IconData icon, Color color) {
+  Widget _accionBtn(String label, IconData icon, Color color, VoidCallback onTap) {
     return _HoverButton(
-      onTap: () {},
+      onTap: onTap,
+      color: color,
+      child: (isHovered) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: isHovered ? color.withValues(alpha: 0.18) : Colors.transparent,
+          borderRadius: BorderRadius.circular(5),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 4),
+            Text(label, style: TextStyle(fontSize: 12, color: color)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _accionBtnMobile(String label, IconData icon, Color color, VoidCallback onTap) {
+    return _HoverButton(
+      onTap: onTap,
       color: color,
       child: (isHovered) => Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isHovered ? color.withValues(alpha: 0.22) : color.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(6),
-          border: Border.all(
-            color: isHovered ? color : color.withValues(alpha: 0.3),
-          ),
+          border: Border.all(color: isHovered ? color : color.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -535,9 +445,15 @@ Widget _accionBtn(String label, IconData icon, Color color) {
   }
 }
 
+// ─────────────────────────────────────────
+// BOTÓN AGREGAR
+// ─────────────────────────────────────────
+
 class _AgregarButton extends StatefulWidget {
   final bool isWide;
-  const _AgregarButton({required this.isWide});
+  final VoidCallback onTap;
+
+  const _AgregarButton({required this.isWide, required this.onTap});
 
   @override
   State<_AgregarButton> createState() => _AgregarButtonState();
@@ -556,7 +472,7 @@ class _AgregarButtonState extends State<_AgregarButton> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        onTap: () {},
+        onTap: widget.onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: widget.isWide ? null : double.infinity,
@@ -565,39 +481,30 @@ class _AgregarButtonState extends State<_AgregarButton> {
             color: _hovered ? _hover : _base,
             borderRadius: BorderRadius.circular(8),
             boxShadow: _hovered
-                ? [
-                    BoxShadow(
-                      color: _base.withValues(alpha: 0.4),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    )
-                  ]
+                ? [BoxShadow(color: _base.withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4))]
                 : [],
           ),
           child: const Text(
             'Agregar producto',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16,
-              fontFamily: 'Itim',
-            ),
+            style: TextStyle(color: Colors.white, fontSize: 16, fontFamily: 'Itim'),
           ),
         ),
       ),
     );
   }
 }
+
+// ─────────────────────────────────────────
+// HOVER BUTTON
+// ─────────────────────────────────────────
+
 class _HoverButton extends StatefulWidget {
   final VoidCallback onTap;
   final Color color;
   final Widget Function(bool isHovered) child;
 
-  const _HoverButton({
-    required this.onTap,
-    required this.color,
-    required this.child,
-  });
+  const _HoverButton({required this.onTap, required this.color, required this.child});
 
   @override
   State<_HoverButton> createState() => _HoverButtonState();
