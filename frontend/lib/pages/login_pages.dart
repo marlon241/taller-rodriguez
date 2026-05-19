@@ -1,25 +1,58 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Login',
-      home: const LoginPage(),
-    );
-  }
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class LoginPage extends StatelessWidget {
-  const LoginPage({super.key});
+class _LoginPageState extends State<LoginPage> {
+  final TextEditingController _duiController = TextEditingController();
+  final TextEditingController _contrasenaController = TextEditingController();
+  bool _cargando = false;
+  String _mensaje = '';
+
+  Future<void> _login() async {
+    setState(() {
+      _cargando = true;
+      _mensaje = '';
+    });
+
+    try {
+      final response = await http.post(
+        Uri.parse('http://localhost:8000/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'dui': _duiController.text,
+          'contrasena': _contrasenaController.text,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (data['success'] == true) {
+        setState(() {
+          _mensaje = '¡Bienvenido ${data['data']['nombre']}!';
+        });
+        
+      } else {
+        setState(() {
+          _mensaje = data['message'];
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _mensaje = 'Error al conectar con el servidor';
+      });
+    } finally {
+      setState(() {
+        _cargando = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +67,7 @@ class LoginPage extends StatelessWidget {
             borderRadius: BorderRadius.circular(15),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha:0.15),
+                color: Colors.black.withValues(alpha: 0.15),
                 blurRadius: 20,
                 offset: const Offset(0, 10),
               )
@@ -43,20 +76,17 @@ class LoginPage extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-
-              /// ESPACIO PARA EL LOGO
               Container(
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                image: DecorationImage(
-      image: AssetImage('assets/logo_taller.png'), 
-      fit: BoxFit.cover,
-    ),
-  ),
-), // Container
-                
+                  image: DecorationImage(
+                    image: AssetImage('assets/logo_taller.png'),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
 
               const SizedBox(height: 30),
 
@@ -70,20 +100,20 @@ class LoginPage extends StatelessWidget {
 
               const SizedBox(height: 40),
 
-              /// Usuario
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Nombre de usuario",
+                  "DUI",
                   style: TextStyle(fontWeight: FontWeight.w500),
                 ),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 8),
 
               TextField(
+                controller: _duiController,
                 decoration: InputDecoration(
-                  hintText: "Ingresa tu usuario",
+                  hintText: "Ingresa tu DUI",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -93,7 +123,6 @@ class LoginPage extends StatelessWidget {
 
               const SizedBox(height: 25),
 
-              /// Contraseña
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
@@ -102,9 +131,10 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 18),
+              const SizedBox(height: 8),
 
               TextField(
+                controller: _contrasenaController,
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: "Ingresa tu contraseña",
@@ -117,23 +147,38 @@ class LoginPage extends StatelessWidget {
 
               const SizedBox(height: 35),
 
-              /// Botón
+              
+              if (_mensaje.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 15),
+                  child: Text(
+                    _mensaje,
+                    style: TextStyle(
+                      color: _mensaje.contains('Bienvenido')
+                          ? Colors.green
+                          : Colors.red,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+
               SizedBox(
                 width: double.infinity,
                 height: 45,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: _cargando ? null : _login,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.red,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: const Text(
-                    "Iniciar sesión",
-                    style: TextStyle(fontSize: 16,
-                    color : Colors.white,)
-                  ),
+                  child: _cargando
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text(
+                          "Iniciar sesión",
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                 ),
               ),
             ],
