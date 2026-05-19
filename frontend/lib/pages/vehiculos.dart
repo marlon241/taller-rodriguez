@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/widgets/navigation/sidebar.dart';
 import 'package:frontend/widgets/inputs/busqueda.dart';
 import 'package:frontend/widgets/inputs/select.dart';
+import 'package:frontend/widgets/modals/agregar_vehiculo_modal.dart';
 
 class VehiculosPage extends StatefulWidget {
   const VehiculosPage({super.key});
@@ -711,9 +712,12 @@ class _AgregarVehiculoButtonState extends State<_AgregarVehiculoButton> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        onTap: () {
-          // TODO (navegación): abrir modal/pantalla de agregar vehículo
-        },
+       onTap: () {
+  showDialog(
+    context: context,
+    builder: (context) => const AgregarVehiculoModal(),
+  );
+},
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: widget.isWide ? 400 : double.infinity,
