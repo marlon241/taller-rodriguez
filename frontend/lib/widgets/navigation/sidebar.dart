@@ -115,7 +115,6 @@ class SidebarDrawerContent extends StatelessWidget {
                     _drawerItem(context, 'Ofertas', 'ofertas', '/ofertas'),
                     _drawerItem(context, 'Facturacion', 'facturacion', '/facturacion'),
                     _drawerItem(context, 'Inventario', 'inventario', '/inventario'),
-                    _drawerItem(context, 'Bodega', 'bodega', '/bodega'),
                     _drawerItem(context, 'Proveedores', 'proveedores', '/proveedores'),
                     _drawerItem(context, 'Empleados', 'empleados', '/empleados'),
                     _drawerItem(context, 'Reportes', 'reportes', '/reportes'),

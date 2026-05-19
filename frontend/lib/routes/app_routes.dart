@@ -13,6 +13,7 @@ import '../pages/empleados.dart';
 import '../pages/vehiculos.dart';
 import '../pages/proveedores.dart';
 import '../pages/historialTurnos.dart';
+import '../pages/reportes.dart';
 
 
 class AppRoutes {
@@ -29,6 +30,8 @@ class AppRoutes {
   static const String vehiculos = '/vehiculos';
   static const String proveedores = '/proveedores';
   static const String historialTurnos = '/historialTurnos';
+  static const String reportes = '/reportes';
+
 
   static Map<String, WidgetBuilder> get routes => {
     adminRegister: (context) => const RegistroAdmin(),
@@ -44,5 +47,6 @@ class AppRoutes {
     vehiculos: (context) => const VehiculosPage(),
     proveedores: (context) => const ProveedoresScreen(),
     historialTurnos: (context) => const HistorialTurnosPage(),
+    reportes: (context) => const ReportesScreen(),
   };
 }
