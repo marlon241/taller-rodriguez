@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import '../controllers/auth_controller.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,37 +20,20 @@ class _LoginPageState extends State<LoginPage> {
       _mensaje = '';
     });
 
-    try {
-      final response = await http.post(
-        Uri.parse('http://localhost:8000/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'dui': _duiController.text,
-          'contrasena': _contrasenaController.text,
-        }),
-      );
+    final result = await AuthController.login(
+      _duiController.text,
+      _contrasenaController.text,
+    );
 
-      final data = jsonDecode(response.body);
-
-      if (data['success'] == true) {
-        setState(() {
-          _mensaje = '¡Bienvenido ${data['data']['nombre']}!';
-        });
-        
+    setState(() {
+      _cargando = false;
+      if (result['success'] == true) {
+        _mensaje = '¡Bienvenido ${result['data']['nombre']}!';
+        // Aquí después navegamos al dashboard
       } else {
-        setState(() {
-          _mensaje = data['message'];
-        });
+        _mensaje = result['message'];
       }
-    } catch (e) {
-      setState(() {
-        _mensaje = 'Error al conectar con el servidor';
-      });
-    } finally {
-      setState(() {
-        _cargando = false;
-      });
-    }
+    });
   }
 
   @override
@@ -79,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
               Container(
                 width: 120,
                 height: 120,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
                   image: DecorationImage(
                     image: AssetImage('assets/logo_taller.png'),
@@ -147,7 +129,6 @@ class _LoginPageState extends State<LoginPage> {
 
               const SizedBox(height: 35),
 
-              
               if (_mensaje.isNotEmpty)
                 Padding(
                   padding: const EdgeInsets.only(bottom: 15),
