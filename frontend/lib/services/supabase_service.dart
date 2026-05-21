@@ -1,28 +1,27 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class SupabaseService {
-  static final _client = Supabase.instance.client;
+  static const String _baseUrl = 'http://localhost:8080/api';
 
   // LOGIN
-  static Future<Map<String, dynamic>> login(String dui, String contrasena) async {
+  static Future<Map<String, dynamic>> login(String usuario, String contrasena) async {
     try {
-      final response = await _client
-          .from('empleados')
-          .select()
-          .eq('dui', dui)
-          .eq('contrasena', contrasena)
-          .eq('estado', true)
-          .single();
+      final response = await http.post(
+        Uri.parse('$_baseUrl/login'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'usuario': usuario,
+          'contrasena': contrasena,
+        }),
+      );
 
-      return {
-        'success': true,
-        'message': 'Login exitoso',
-        'data': response,
-      };
+      final data = jsonDecode(response.body);
+      return Map<String, dynamic>.from(data);
     } catch (e) {
       return {
         'success': false,
-        'message': 'DUI o contraseña incorrectos',
+        'message': 'Error al conectar con el servidor: $e',
       };
     }
   }
@@ -30,39 +29,22 @@ class SupabaseService {
   // REGISTRO DE ADMINISTRADOR
   static Future<Map<String, dynamic>> registrarAdmin(Map<String, dynamic> datos) async {
     try {
-      // Verificar que el DUI no exista
-      final existe = await _client
-          .from('empleados')
-          .select('id')
-          .eq('dui', datos['dui']);
+      final response = await http.post(
+        Uri.parse('$_baseUrl/registro-admin'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'nombre': datos['nombre'],
+          'contrasena': datos['contrasena'],
+          'confirmar_contrasena': datos['confirmar_contrasena'],
+        }),
+      );
 
-      if (existe.isNotEmpty) {
-        return {
-          'success': false,
-          'message': 'Ya existe un empleado con ese DUI',
-        };
-      }
-
-      await _client.from('empleados').insert({
-        'nombre': datos['nombre'],
-        'dui': datos['dui'],
-        'telefono': datos['telefono'],
-        'contrasena': datos['contrasena'],
-        'cargo': 'Administrador',
-        'estado': true,
-        'fecha_contratacion': DateTime.now().toIso8601String().split('T')[0],
-        'sueldo_base': 0,
-        'licencia': false,
-      });
-
-      return {
-        'success': true,
-        'message': 'Administrador registrado exitosamente',
-      };
+      final data = jsonDecode(response.body);
+      return Map<String, dynamic>.from(data);
     } catch (e) {
       return {
         'success': false,
-        'message': 'Error al registrar: $e',
+        'message': 'Error al conectar con el servidor: $e',
       };
     }
   }

@@ -1,22 +1,20 @@
 import '../services/supabase_service.dart';
 
 class AuthController {
-  
-  static Future<Map<String, dynamic>> login(String dui, String contrasena) async {
-    if (dui.isEmpty || contrasena.isEmpty) {
+  // LOGIN
+  static Future<Map<String, dynamic>> login(String usuario, String contrasena) async {
+    if (usuario.isEmpty || contrasena.isEmpty) {
       return {
         'success': false,
-        'message': 'DUI y contraseña son requeridos',
+        'message': 'Usuario y contraseña son requeridos',
       };
     }
-
-    return await SupabaseService.login(dui, contrasena);
+    return await SupabaseService.login(usuario, contrasena);
   }
 
-  
+  // REGISTRO DE ADMINISTRADOR
   static Future<Map<String, dynamic>> registrarAdmin(Map<String, dynamic> datos) async {
-    if (datos['nombre'].isEmpty || datos['dui'].isEmpty ||
-        datos['telefono'].isEmpty || datos['contrasena'].isEmpty) {
+    if ((datos['nombre'] ?? '').isEmpty || (datos['contrasena'] ?? '').isEmpty) {
       return {
         'success': false,
         'message': 'Todos los campos son requeridos',

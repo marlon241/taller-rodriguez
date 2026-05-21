@@ -1,8 +1,8 @@
 class Credenciales {
   static const String supabaseUrl =
-      'https://ywztrexdhztdmfceoggx.supabase.co/rest/v1/';
+      'https://ukmfbinwpqfribeladhk.supabase.co/rest/v1/';
   static const String supabaseKey =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl3enRyZXhkaHp0ZG1mY2VvZ2d4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkxOTc5MTYsImV4cCI6MjA5NDc3MzkxNn0.3tLJM9tQztDgYbdUP_IMi_-HxuFIjd7oq2ED3FGLv7Y';
+      'sb_publishable_gEyPG1zyWhM6lGAsTO3mfw_whu_WU5_';
 
   static const String firebaseProjectId = 'taller-rodrigez-db';
   static const String firebaseApiKey =

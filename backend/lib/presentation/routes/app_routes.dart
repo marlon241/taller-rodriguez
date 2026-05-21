@@ -3,11 +3,15 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import '../../injection.dart';
 import '../controllers/facturacion_controller.dart';
+import '../controllers/auth_controller.dart';
 
 class AppRoutes {
   final FacturacionController _facturacionController;
+  final AuthController _authController;
   
-  AppRoutes() : _facturacionController = getIt<FacturacionController>();
+  AppRoutes() 
+    : _facturacionController = getIt<FacturacionController>(),
+      _authController = getIt<AuthController>();
   
   Router get router {
     final router = Router();
@@ -15,17 +19,26 @@ class AppRoutes {
     router.options('/api/<path|.*>', (Request request) async {
       return Response.ok('', headers: _jsonHeaders);
     });
+
+    // Auth
+    router.post('/api/login', _login);
+    router.post('/api/registro-admin', _registrarAdmin);
     
+    // Clientes
     router.get('/api/clientes', _obtenerClientes);
     router.get('/api/clientes/<id>/documentos', _obtenerDocumentosCliente);
     
+    // Vehiculos
     router.get('/api/vehiculos', _obtenerVehiculos);
     router.get('/api/vehiculos/<id>/documentos', _obtenerDocumentosVehiculo);
     
+    // Ofertas
     router.get('/api/ofertas', _obtenerOfertas);
     
+    // Inventario
     router.get('/api/inventario', _obtenerInventario);
     
+    // Facturas
     router.get('/api/facturas', _obtenerFacturas);
     router.post('/api/facturas', _crearFactura);
     router.delete('/api/facturas/<id>', _eliminarFactura);
@@ -33,6 +46,46 @@ class AppRoutes {
     router.all('/<path|.*>', _rutaNoEncontrada);
     
     return router;
+  }
+
+  Future<Response> _login(Request request) async {
+    try {
+      final body = await request.readAsString();
+      Map<String, dynamic> data = {};
+      if (body.isNotEmpty) {
+        final decoded = json.decode(body);
+        if (decoded is Map) {
+          data = Map<String, dynamic>.from(decoded);
+        }
+      }
+      final resultado = await _authController.login(data);
+      return Response.ok(resultado, headers: _jsonHeaders);
+    } catch (e) {
+      return Response.badRequest(
+        body: json.encode({'success': false, 'message': 'Error al procesar la solicitud'}),
+        headers: _jsonHeaders,
+      );
+    }
+  }
+
+  Future<Response> _registrarAdmin(Request request) async {
+    try {
+      final body = await request.readAsString();
+      Map<String, dynamic> data = {};
+      if (body.isNotEmpty) {
+        final decoded = json.decode(body);
+        if (decoded is Map) {
+          data = Map<String, dynamic>.from(decoded);
+        }
+      }
+      final resultado = await _authController.registrarAdmin(data);
+      return Response.ok(resultado, headers: _jsonHeaders);
+    } catch (e) {
+      return Response.badRequest(
+        body: json.encode({'success': false, 'message': 'Error al procesar la solicitud'}),
+        headers: _jsonHeaders,
+      );
+    }
   }
   
   Future<Response> _obtenerClientes(Request request) async {
