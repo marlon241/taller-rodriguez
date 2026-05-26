@@ -117,6 +117,12 @@ class _CajaPageState extends State<CajaPage> {
                               onTap: _verHistorial,
                               width: 200,
                             ),
+                            const SizedBox(width: 20),
+                            _CajaButton(
+                              label: 'Historial de facturas',
+                              onTap: _verHistorialFacturas,
+                              width: 200,
+                            ),
                           ],
                         )
                       : Column(
@@ -129,6 +135,10 @@ class _CajaPageState extends State<CajaPage> {
                             _CajaButton(
                                 label: 'Historial de turnos',
                                 onTap: _verHistorial),
+                            const SizedBox(height: 12),
+                                  _CajaButton(
+                                      label: 'Historial de facturas',
+                                      onTap: _verHistorial),
                           ],
                         ),
                   const SizedBox(height: 10),
@@ -225,6 +235,9 @@ class _CajaPageState extends State<CajaPage> {
 
   void _verHistorial() {
     Navigator.pushNamed(context, '/historialTurnos');
+  }
+  void _verHistorialFacturas() {
+    Navigator.pushNamed(context, '/historialFacturas');
   }
 }
 

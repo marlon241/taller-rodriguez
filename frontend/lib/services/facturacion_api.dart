@@ -95,6 +95,10 @@ class FacturacionApi {
     int? idCaja,
   }) async {
     try {
+      if (descuentoPorcentaje > 100) {
+        return {'success': false, 'message': 'El descuento no puede ser mayor a 100%'};
+      }
+      
       final body = json.encode({
         'id_cliente': idCliente,
         'id_vehiculo': idVehiculo,
@@ -114,6 +118,20 @@ class FacturacionApi {
       return json.decode(response.body);
     } catch (e) {
       return {'success': false, 'message': 'Error al crear factura: $e'};
+    }
+  }
+  
+  Future<Map<String, dynamic>?> obtenerFacturaPorId(int id) async {
+    try {
+      final response = await _client.get(Uri.parse('$_baseUrl/api/facturas/$id'));
+      final data = json.decode(response.body);
+      
+      if (data['success'] == true) {
+        return data['data'];
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
   

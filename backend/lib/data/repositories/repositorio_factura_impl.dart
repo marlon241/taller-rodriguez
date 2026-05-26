@@ -2,14 +2,16 @@ import 'dart:async';
 import '../../domain/entities/factura.dart';
 import '../../domain/entities/detalle_factura.dart';
 import '../../domain/repositories/factura_repository.dart';
+import '../../domain/repositories/inventario_repository.dart';
 import '../datasources/supabase_datasource.dart';
 
 class FacturaRepositoryImpl implements FacturaRepository {
   final SupabaseDataSource _dataSource;
-  
+  final InventarioRepository _inventarioRepository;
+
   final _facturasController = StreamController<List<Factura>>.broadcast();
-  
-  FacturaRepositoryImpl(this._dataSource);
+
+  FacturaRepositoryImpl(this._dataSource, this._inventarioRepository);
   
   @override
   Stream<List<Factura>> obtenerFacturas() {
@@ -21,7 +23,7 @@ class FacturaRepositoryImpl implements FacturaRepository {
     try {
       final datos = await _dataSource.select(
         'facturacion',
-        orderBy: 'order=fecha.desc',
+        orderBy: 'fecha.desc',
       );
       
       final facturas = <Factura>[];
@@ -34,11 +36,22 @@ class FacturaRepositoryImpl implements FacturaRepository {
           tipo_factura: factura.tipo_factura,
           subtotal: factura.subtotal,
           iva: factura.iva,
+          descuentoPorcentaje: factura.descuentoPorcentaje,
           descuento: factura.descuento,
           total: factura.total,
           id_cliente: factura.id_cliente,
+          nombre_cliente: factura.nombre_cliente,
+          telefono_cliente: factura.telefono_cliente,
+          dui_cliente: factura.dui_cliente,
+          correo_cliente: factura.correo_cliente,
           id_vehiculo: factura.id_vehiculo,
+          modelo_vehiculo: factura.modelo_vehiculo,
+          marca_vehiculo: factura.marca_vehiculo,
+          placa_vehiculo: factura.placa_vehiculo,
+          anio_vehiculo: factura.anio_vehiculo,
           id_oferta: factura.id_oferta,
+          nombre_oferta: factura.nombre_oferta,
+          porcentaje_oferta: factura.porcentaje_oferta,
           id_caja: factura.id_caja,
           detalles: detalles,
         ));
@@ -82,11 +95,22 @@ class FacturaRepositoryImpl implements FacturaRepository {
         tipo_factura: factura.tipo_factura,
         subtotal: factura.subtotal,
         iva: factura.iva,
+        descuentoPorcentaje: factura.descuentoPorcentaje,
         descuento: factura.descuento,
         total: factura.total,
         id_cliente: factura.id_cliente,
+        nombre_cliente: factura.nombre_cliente,
+        telefono_cliente: factura.telefono_cliente,
+        dui_cliente: factura.dui_cliente,
+        correo_cliente: factura.correo_cliente,
         id_vehiculo: factura.id_vehiculo,
+        modelo_vehiculo: factura.modelo_vehiculo,
+        marca_vehiculo: factura.marca_vehiculo,
+        placa_vehiculo: factura.placa_vehiculo,
+        anio_vehiculo: factura.anio_vehiculo,
         id_oferta: factura.id_oferta,
+        nombre_oferta: factura.nombre_oferta,
+        porcentaje_oferta: factura.porcentaje_oferta,
         id_caja: factura.id_caja,
         detalles: detalles,
       );
@@ -106,7 +130,7 @@ class FacturaRepositoryImpl implements FacturaRepository {
       final datos = await _dataSource.select(
         'facturacion',
         filtros: 'id_cliente=eq.$idCliente',
-        orderBy: 'order=fecha.desc',
+        orderBy: 'fecha.desc',
       );
       
       final facturas = datos.map((json) => Factura.fromJson(json)).toList();
@@ -127,7 +151,7 @@ class FacturaRepositoryImpl implements FacturaRepository {
       final datos = await _dataSource.select(
         'facturacion',
         filtros: 'id_vehiculo=eq.$idVehiculo',
-        orderBy: 'order=fecha.desc',
+        orderBy: 'fecha.desc',
       );
       
       final facturas = datos.map((json) => Factura.fromJson(json)).toList();
@@ -144,21 +168,19 @@ class FacturaRepositoryImpl implements FacturaRepository {
       'tipo_factura': factura.tipo_factura.valor,
       'subtotal': factura.subtotal,
       'iva': factura.iva,
+      'descuento_porcentaje': factura.descuentoPorcentaje,
       'descuento': factura.descuento,
       'total': factura.total,
       'id_cliente': factura.id_cliente,
     };
-    
-    if (factura.id_vehiculo != null) {
-      facturaData['id_vehiculo'] = factura.id_vehiculo;
-    }
+
     if (factura.id_oferta != null) {
       facturaData['id_oferta'] = factura.id_oferta;
     }
     if (factura.id_caja != null) {
       facturaData['id_caja'] = factura.id_caja;
     }
-    
+
     final facturaInsertada = await _dataSource.insert('facturacion', facturaData);
     int? idFactura = facturaInsertada['id'] as int?;
     
@@ -166,7 +188,7 @@ class FacturaRepositoryImpl implements FacturaRepository {
       final facturasRecientes = await _dataSource.select(
         'facturacion',
         filtros: 'id_cliente=eq.${factura.id_cliente}',
-        orderBy: 'order=fecha.desc',
+        orderBy: 'fecha.desc',
         limit: 1,
       );
       if (facturasRecientes.isNotEmpty) {
@@ -180,32 +202,53 @@ class FacturaRepositoryImpl implements FacturaRepository {
     
     final detallesData = factura.detalles.map((detalle) => {
       'id_factura': idFactura,
-      'id_producto_firebase': detalle.id_producto_firebase,
+      'id_producto': detalle.id_producto,
       'nombre_producto': detalle.nombre_producto,
-      'tipo_producto': detalle.tipo_producto.valor,
+      'tipo_producto': detalle.tipo_producto,
+      'clasificacion': detalle.clasificacion,
+      'descripcion': detalle.descripcion,
+      'sku': detalle.sku,
       'cantidad': detalle.cantidad,
       'precio_unitario': detalle.precio_unitario,
       'subtotal': detalle.subtotal,
     }).toList();
     
     await _dataSource.insertMultiple('detalles_factura', detallesData);
-    
+
+    for (final detalle in factura.detalles) {
+      final esProducto = detalle.tipo_producto.toLowerCase() == 'producto';
+      if (esProducto) {
+        await _inventarioRepository.restarStock(detalle.id_producto, detalle.cantidad);
+      }
+    }
+
     _cargarFacturas();
     
     return Factura(
-      id: idFactura,
-      fecha: factura.fecha,
-      tipo_factura: factura.tipo_factura,
-      subtotal: factura.subtotal,
-      iva: factura.iva,
-      descuento: factura.descuento,
-      total: factura.total,
-      id_cliente: factura.id_cliente,
-      id_vehiculo: factura.id_vehiculo,
-      id_oferta: factura.id_oferta,
-      id_caja: factura.id_caja,
-      detalles: factura.detalles,
-    );
+        id: idFactura,
+        fecha: factura.fecha,
+        tipo_factura: factura.tipo_factura,
+        subtotal: factura.subtotal,
+        iva: factura.iva,
+        descuentoPorcentaje: factura.descuentoPorcentaje,
+        descuento: factura.descuento,
+        total: factura.total,
+        id_cliente: factura.id_cliente,
+        nombre_cliente: factura.nombre_cliente,
+        telefono_cliente: factura.telefono_cliente,
+        dui_cliente: factura.dui_cliente,
+        correo_cliente: factura.correo_cliente,
+        id_vehiculo: factura.id_vehiculo,
+        modelo_vehiculo: factura.modelo_vehiculo,
+        marca_vehiculo: factura.marca_vehiculo,
+        placa_vehiculo: factura.placa_vehiculo,
+        anio_vehiculo: factura.anio_vehiculo,
+        id_oferta: factura.id_oferta,
+        nombre_oferta: factura.nombre_oferta,
+        porcentaje_oferta: factura.porcentaje_oferta,
+        id_caja: factura.id_caja,
+        detalles: factura.detalles,
+      );
   }
   
   @override

@@ -14,4 +14,6 @@ abstract class OfertaRepository {
   Future<Oferta> actualizarOferta(Oferta oferta);
   
   Future<bool> eliminarOferta(int id);
+  
+  Future<bool> tieneFacturasAsociadas(int id);
 }

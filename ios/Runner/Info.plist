@@ -26,6 +26,11 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+
+	<!-- ✅ AQUÍ, fuera de UIApplicationSceneManifest -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Selecciona tu foto de perfil</string>
+
 	<key>UIApplicationSceneManifest</key>
 	<dict>
 		<key>UIApplicationSupportsMultipleScenes</key>

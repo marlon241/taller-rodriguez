@@ -21,7 +21,7 @@ class ClienteRepositoryImpl implements ClienteRepository {
       final datos = await _dataSource.select(
         'clientes',
         filtros: 'estado=eq.true',
-        orderBy: 'order=nombre.asc',
+        orderBy: 'nombre.asc',
       );
       
       final clientes = datos.map((json) => Cliente.fromJson(json)).toList();
@@ -82,7 +82,7 @@ class ClienteRepositoryImpl implements ClienteRepository {
       final datos = await _dataSource.select(
         'clientes',
         filtros: 'estado=eq.true&or(nombre.ilike.*$query*,dui.ilike.*$query*)',
-        orderBy: 'order=nombre.asc',
+        orderBy: 'nombre.asc',
       );
       
       final clientes = datos.map((json) => Cliente.fromJson(json)).toList();

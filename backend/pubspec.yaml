@@ -1,11 +1,11 @@
 name: taller_rodriguez_backend
-description: Backend del módulo de Facturación - Taller Rodriguez
 version: 1.0.0
 
 environment:
   sdk: ^3.11.1
 
 dependencies:
+
   shelf: ^1.4.2
   shelf_router: ^1.1.4
   http: ^0.13.6

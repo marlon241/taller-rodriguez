@@ -13,14 +13,20 @@ import 'domain/repositories/inventario_repository.dart';
 import 'domain/repositories/oferta_repository.dart';
 import 'domain/repositories/factura_repository.dart';
 import 'domain/repositories/auth_repository.dart';
+import 'data/repositories/repositorio_proveedor_impl.dart';
+import 'domain/repositories/proveedor_repository.dart';
+import 'presentation/controllers/proveedor_controller.dart';
+import 'presentation/controllers/reportes_controller.dart';
 import 'presentation/controllers/facturacion_controller.dart';
 import 'presentation/controllers/auth_controller.dart';
+import 'presentation/controllers/inventario_controller.dart';
+import 'presentation/controllers/oferta_controller.dart';
 
 final getIt = GetIt.instance;
 
 void configurarDependencias() {
   getIt.registerLazySingleton<SupabaseDataSource>(
-    () => SupabaseDataSource(),
+    () => SupabaseDataSource(useServiceRole: true),
   );
 
   getIt.registerLazySingleton<FirebaseDataSource>(
@@ -36,15 +42,19 @@ void configurarDependencias() {
   );
 
   getIt.registerLazySingleton<InventarioRepository>(
-    () => InventarioRepositoryImpl(getIt<FirebaseDataSource>()),
+    () => InventarioRepositoryImpl(getIt<SupabaseDataSource>()),
   );
 
   getIt.registerLazySingleton<OfertaRepository>(
     () => OfertaRepositoryImpl(getIt<SupabaseDataSource>()),
   );
 
+  getIt.registerLazySingleton<ProveedorRepository>(
+    () => ProveedorRepositoryImpl(getIt<SupabaseDataSource>()),
+  );
+
   getIt.registerLazySingleton<FacturaRepository>(
-    () => FacturaRepositoryImpl(getIt<SupabaseDataSource>()),
+    () => FacturaRepositoryImpl(getIt<SupabaseDataSource>(), getIt<InventarioRepository>()),
   );
 
   getIt.registerLazySingleton<AuthRepository>(
@@ -64,6 +74,32 @@ void configurarDependencias() {
   getIt.registerFactory<AuthController>(
     () => AuthController(
       authRepository: getIt<AuthRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<InventarioController>(
+    () => InventarioController(
+      repository: getIt<InventarioRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<ProveedorController>(
+    () => ProveedorController(
+      repository: getIt<ProveedorRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<ReportesController>(
+    () => ReportesController(
+      facturaRepository: getIt<FacturaRepository>(),
+      inventarioRepository: getIt<InventarioRepository>(),
+      vehiculoRepository: getIt<VehiculoRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<OfertaController>(
+    () => OfertaController(
+      repository: getIt<OfertaRepository>(),
     ),
   );
 }

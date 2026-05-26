@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/widgets/navigation/sidebar.dart';
+import 'package:frontend/services/proveedor_api.dart';
 
 class ProveedoresScreen extends StatefulWidget {
   const ProveedoresScreen({super.key});
@@ -14,18 +15,139 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
   final TextEditingController _correoController = TextEditingController();
   final TextEditingController _nitController = TextEditingController();
   String? _locacionSeleccionada;
+  final ProveedorApi _api = ProveedorApi();
 
   final List<String> _locaciones = ['Nacional', 'Internacional'];
 
-  final List<Map<String, String>> _proveedores = [
-    {
-      'nombre': 'Autopartes El Rápido, S.A. de C.V.',
-      'locacion': 'Nacional',
-      'telefono': '7890-1234',
-      'correo': 'contacto@rapido.com',
-      'nit': '1234-567890-001-1',
-    },
-  ];
+  List<Map<String, dynamic>> _proveedores = [];
+
+  bool _isEditing = false;
+  int? _editandoId;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarProveedores();
+  }
+
+  Future<void> _cargarProveedores() async {
+    final datos = await _api.obtenerProveedores();
+    setState(() {
+      _proveedores = datos;
+    });
+  }
+
+  void _resetForm() {
+    _nombreController.clear();
+    _telefonoController.clear();
+    _correoController.clear();
+    _nitController.clear();
+    setState(() {
+      _locacionSeleccionada = null;
+      _isEditing = false;
+      _editandoId = null;
+    });
+  }
+
+  Future<void> _guardarProveedor() async {
+    if (_nombreController.text.isEmpty || _telefonoController.text.isEmpty || _locacionSeleccionada == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor complete los campos obligatorios')),
+      );
+      return;
+    }
+
+    final data = {
+      'nombre': _nombreController.text,
+      'telefono': _telefonoController.text,
+      'correo': _correoController.text,
+      'locacion': _locacionSeleccionada,
+      if (_locacionSeleccionada == 'Nacional') 'nit': _nitController.text,
+    };
+
+    bool success;
+    if (_isEditing && _editandoId != null) {
+      success = (await _api.actualizarProveedor(_editandoId!, data))['success'] == true;
+    } else {
+      success = (await _api.crearProveedor(data))['success'] == true;
+    }
+
+    if (success) {
+      final bool wasEditing = _isEditing;
+      _resetForm();
+      _cargarProveedores();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(wasEditing ? 'Proveedor actualizado exitosamente' : 'Proveedor creado exitosamente'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al guardar proveedor')),
+        );
+      }
+    }
+  }
+
+  void _editarProveedor(Map<String, dynamic> proveedor) {
+    setState(() {
+      _nombreController.text = proveedor['nombre'] ?? '';
+      _telefonoController.text = proveedor['telefono'] ?? '';
+      _correoController.text = proveedor['correo'] ?? '';
+      _nitController.text = proveedor['nit'] ?? '';
+      _locacionSeleccionada = proveedor['locacion'];
+      _isEditing = true;
+      _editandoId = proveedor['id'];
+    });
+  }
+
+  Future<void> _eliminarProveedor(int id) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar eliminación'),
+        content: const Text('¿Está seguro de eliminar este proveedor?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final resultado = await _api.eliminarProveedor(id);
+      if (resultado['success'] == true) {
+        _cargarProveedores();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Proveedor eliminado exitosamente'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(resultado['message'] ?? 'Error al eliminar'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -172,15 +294,15 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
               width: double.infinity,
               height: 52,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: _guardarProveedor,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text(
-                  "Agregar Proveedor",
-                  style: TextStyle(
+                child: Text(
+                  _isEditing ? 'Actualizar Proveedor' : 'Agregar Proveedor',
+                  style: const TextStyle(
                     fontSize: 17,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Itim',
@@ -325,7 +447,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
     );
   }
 
-  Widget _buildTableRow(Map<String, String> proveedor) {
+  Widget _buildTableRow(Map<String, dynamic> proveedor) {
     return Column(
       children: [
         Padding(
@@ -334,12 +456,12 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
             children: [
               Expanded(
                 flex: 4,
-                child: Text(proveedor['nombre']!,
+                child: Text(proveedor['nombre']?.toString() ?? '',
                     style: const TextStyle(fontWeight: FontWeight.w500)),
               ),
               Expanded(
                 flex: 2,
-                child: Text(proveedor['locacion']!,
+                child: Text(proveedor['locacion']?.toString() ?? '',
                     textAlign: TextAlign.center),
               ),
               Expanded(
@@ -348,7 +470,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => _editarProveedor(proveedor),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFE53935),
                         padding: const EdgeInsets.symmetric(
@@ -362,7 +484,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                     ),
                     const SizedBox(width: 8),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => _eliminarProveedor(proveedor['id']),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF880E4F),
                         padding: const EdgeInsets.symmetric(
@@ -385,7 +507,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
     );
   }
 
-  Widget _buildProveedorCard(Map<String, String> proveedor) {
+  Widget _buildProveedorCard(Map<String, dynamic> proveedor) {
     return Column(
       children: [
         Padding(
@@ -398,7 +520,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      proveedor['nombre']!,
+                      proveedor['nombre']?.toString() ?? '',
                       style: const TextStyle(
                           fontWeight: FontWeight.bold, fontSize: 15),
                     ),
@@ -411,7 +533,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
-                      proveedor['locacion']!,
+                      proveedor['locacion']?.toString() ?? '',
                       style: const TextStyle(
                           color: Colors.white,
                           fontSize: 12,
@@ -421,10 +543,10 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                 ],
               ),
               const SizedBox(height: 8),
-              Text(proveedor['correo']!,
+              Text(proveedor['correo']?.toString() ?? '',
                   style:
                       const TextStyle(color: Colors.black54, fontSize: 13)),
-              Text(proveedor['telefono']!,
+              Text(proveedor['telefono']?.toString() ?? '',
                   style:
                       const TextStyle(color: Colors.black54, fontSize: 13)),
               const SizedBox(height: 12),
@@ -432,7 +554,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                 children: [
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => _editarProveedor(proveedor),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFFE53935),
                         foregroundColor: Colors.white,
@@ -445,7 +567,7 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {},
+                      onPressed: () => _eliminarProveedor(proveedor['id']),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF880E4F),
                         foregroundColor: Colors.white,

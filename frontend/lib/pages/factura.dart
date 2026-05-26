@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/widgets/navigation/sidebar.dart';
 import 'package:frontend/services/facturacion_api.dart';
 
@@ -110,23 +111,47 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
 
   /// Agrega un producto/servicio a la factura
   void _agregarItem(Map<String, dynamic> producto) {
-    // Verificar si ya existe en la factura
+    final tipoProducto = producto['tipo'] as String;
+    final esProducto = tipoProducto.toLowerCase() != 'servicio';
+
+    if (esProducto) {
+      final stockDisponible = producto['stock'] as int? ?? 0;
+      final stockMinimo = producto['stock_minimo'] as int? ?? 0;
+
+      final indexExistente = _itemsFactura.indexWhere(
+        (item) => item['id_producto'] == producto['id']
+      );
+
+      int cantidadEnFactura = 0;
+      if (indexExistente >= 0) {
+        cantidadEnFactura = _itemsFactura[indexExistente]['cantidad'] as int;
+      }
+
+      if (cantidadEnFactura >= stockDisponible) {
+        _mostrarMensaje(
+          'No hay más stock disponible para ${producto['nombre']}. Stock: $stockDisponible',
+          isError: true,
+        );
+        return;
+      }
+    }
+
     final index = _itemsFactura.indexWhere(
       (item) => item['id_producto'] == producto['id']
     );
-    
+
     setState(() {
       if (index >= 0) {
-        // Incrementar cantidad si ya existe
         _itemsFactura[index]['cantidad'] += 1;
       } else {
-        // Agregar nuevo item
         _itemsFactura.add({
           'id_producto': producto['id'],
           'nombre': producto['nombre'],
           'tipo': producto['tipo'],
           'cantidad': 1,
           'precio_unitario': producto['precio_venta'],
+          'stock': producto['stock'],
+          'stock_minimo': producto['stock_minimo'],
         });
       }
       _calcularTotales();
@@ -217,7 +242,7 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     
 if (resultado != null && resultado['success'] == true) {
       _mostrarMensaje('Factura creada exitosamente');
-      _limpiarFormulario();
+      await _limpiarFormulario();
     } else {
       _mostrarMensaje(
         errorMsg ?? 'Error al crear factura',
@@ -227,7 +252,7 @@ if (resultado != null && resultado['success'] == true) {
   }
 
   /// Limpia el formulario después de crear una factura
-  void _limpiarFormulario() {
+  Future<void> _limpiarFormulario() async {
     setState(() {
       _itemsFactura = [];
       _clienteSeleccionado = null;
@@ -236,6 +261,11 @@ if (resultado != null && resultado['success'] == true) {
       _descuentoPorcentaje = 0;
       _vehiculos = [];
       _calcularTotales();
+    });
+
+    final inventario = await _api.obtenerInventario();
+    setState(() {
+      _inventario = inventario;
     });
     // Limpiar campos de texto
     _descuentoController.clear();
@@ -347,13 +377,13 @@ if (resultado != null && resultado['success'] == true) {
         // Dropdown Tipo de factura
         _buildDropdown<String>(
           label: "Tipo de factura",
-          hint: "Factura",
+          hint: "Consumidor Final",
           items: const [
+            DropdownMenuItem<String>(value: 'Consumidor Final', child: Text('Consumidor Final')),
             DropdownMenuItem<String>(value: 'Credito Fiscal', child: Text('Credito Fiscal')),
-            DropdownMenuItem<String>(value: 'Normal', child: Text('Normal')),
           ],
           value: _tipoFactura,
-          onChanged: (value) => setState(() => _tipoFactura = value ?? 'Credito Fiscal'),
+          onChanged: (value) => setState(() => _tipoFactura = value ?? 'Consumidor Final'),
         ),
         
         const SizedBox(height: 14),
@@ -393,6 +423,10 @@ if (resultado != null && resultado['success'] == true) {
         TextField(
           controller: _descuentoController,
           keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            _MaxValueFormatter(100),
+          ],
           decoration: InputDecoration(
             suffixText: "%",
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
@@ -431,7 +465,7 @@ if (resultado != null && resultado['success'] == true) {
                 child: const Row(
                   children: [
                     Expanded(flex: 1, child: Text("ID", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
-                    Expanded(flex: 2, child: Text("CANT.", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
+                    Expanded(flex: 3, child: Text("CANTIDAD", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
                     Expanded(flex: 4, child: Text("NOMBRE", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
                     Expanded(flex: 3, child: Text("TIPO", textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
                     Expanded(flex: 2, child: Text("PRECIO", textAlign: TextAlign.right, style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11))),
@@ -456,13 +490,17 @@ if (resultado != null && resultado['success'] == true) {
                           final item = _itemsFactura[index];
                           final cantidad = item['cantidad'] as int;
                           final precio = (item['precio_unitario'] as num).toDouble();
+                          final stock = item['stock'] as int?;
                           return _buildItemFactura(
                             index + 1,
                             cantidad,
                             item['nombre'] as String,
                             item['tipo'] as String,
                             precio,
+                            stock,
                             () => _eliminarItem(index),
+                            () => _aumentarCantidad(index),
+                            () => _reducirCantidad(index),
                           );
                         },
                       ),
@@ -592,6 +630,7 @@ if (resultado != null && resultado['success'] == true) {
                               (producto['precio_venta'] as num).toDouble(),
                               producto['tipo'] as String,
                               producto['stock'] as int?,
+                              producto['stock_minimo'] as int?,
                               () => _agregarItem(producto),
                             );
                           },
@@ -649,8 +688,12 @@ if (resultado != null && resultado['success'] == true) {
     );
   }
 
-  Widget _buildItemFactura(int id, int cantidad, String nombre, String tipo, double precio, VoidCallback onRemove) {
+  Widget _buildItemFactura(int id, int cantidad, String nombre, String tipo, double precio, int? stock, VoidCallback onRemove, VoidCallback onIncrease, VoidCallback onDecrease) {
     final bool isServicio = tipo == "Servicio";
+    final int stockDisponible = stock ?? 0;
+    final bool puedeAumentar = !isServicio && cantidad < stockDisponible;
+    final bool puedeReducir = cantidad > 1;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -659,7 +702,38 @@ if (resultado != null && resultado['success'] == true) {
       child: Row(
         children: [
           Expanded(flex: 1, child: Text("#$id", style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600))),
-          Expanded(flex: 2, child: Text("$cantidad", textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(flex: 3, child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(Icons.remove, size: 16, color: puedeReducir ? Colors.grey.shade600 : Colors.grey.shade300),
+                  onPressed: puedeReducir ? onDecrease : null,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  "$cantidad",
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+              SizedBox(
+                width: 24,
+                height: 24,
+                child: IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  icon: Icon(Icons.add, size: 16, color: puedeAumentar ? Colors.grey.shade600 : Colors.grey.shade300),
+                  onPressed: puedeAumentar ? onIncrease : null,
+                ),
+              ),
+            ],
+          )),
           Expanded(flex: 4, child: Text(nombre, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)),
           Expanded(flex: 3, child: Text(tipo, textAlign: TextAlign.center, style: TextStyle(fontSize: 12, color: isServicio ? Colors.orange.shade700 : Colors.blue.shade700))),
           Expanded(flex: 2, child: Text("\$${precio.toStringAsFixed(2)}", textAlign: TextAlign.right, style: const TextStyle(fontWeight: FontWeight.bold))),
@@ -676,22 +750,53 @@ if (resultado != null && resultado['success'] == true) {
     );
   }
 
-  Widget _buildProductRow(int id, String nombre, double precio, String tipo, int? stock, VoidCallback onTap) {
+  Widget _buildProductRow(int id, String nombre, double precio, String tipo, int? stock, int? stockMinimo, VoidCallback onTap) {
     final bool isServicio = tipo == "Servicio";
+    final int stockActual = stock ?? 0;
+    final int stockMin = stockMinimo ?? 0;
+    final bool sinStock = stockActual == 0;
+    final bool stockBajo = !sinStock && stockActual <= stockMin;
+
+    Color? rowColor;
+    if (sinStock) {
+      rowColor = Colors.red.shade50;
+    } else if (stockBajo) {
+      rowColor = Colors.orange.shade50;
+    }
+
     return InkWell(
-      onTap: onTap,
+      onTap: sinStock ? null : onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
+          color: rowColor,
           border: Border(bottom: BorderSide(color: Colors.grey.shade100)),
         ),
         child: Row(
           children: [
             Expanded(flex: 1, child: Text("#$id", style: const TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w600))),
             Expanded(flex: 2, child: Text("\$${precio.toStringAsFixed(2)}", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13))),
-            Expanded(flex: 3, child: Text(nombre, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis, maxLines: 1)),
+            Expanded(flex: 3, child: Text(nombre, style: TextStyle(fontSize: 13, color: sinStock ? Colors.grey : Colors.black), overflow: TextOverflow.ellipsis, maxLines: 1)),
             Expanded(flex: 2, child: Text(tipo, style: TextStyle(fontSize: 13, color: isServicio ? Colors.orange.shade700 : Colors.blue.shade700, fontWeight: FontWeight.w600), overflow: TextOverflow.ellipsis)),
-            Expanded(flex: 1, child: Text(stock != null ? "$stock" : "-", textAlign: TextAlign.right, style: const TextStyle(fontSize: 13, color: Colors.grey))),
+            Expanded(flex: 1, child: Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (sinStock)
+                  const Icon(Icons.block, size: 14, color: Colors.red)
+                else if (stockBajo)
+                  Icon(Icons.warning, size: 14, color: Colors.orange.shade700),
+                const SizedBox(width: 4),
+                Text(
+                  stock != null ? "$stock" : "-",
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: sinStock ? Colors.red : (stockBajo ? Colors.orange.shade700 : Colors.grey),
+                    fontWeight: stockBajo ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            )),
           ],
         ),
       ),
@@ -703,5 +808,60 @@ if (resultado != null && resultado['success'] == true) {
       _itemsFactura.removeAt(index);
       _calcularTotales();
     });
+  }
+
+  void _aumentarCantidad(int index) {
+    final item = _itemsFactura[index];
+    final tipoProducto = item['tipo'] as String;
+    final esProducto = tipoProducto.toLowerCase() != 'servicio';
+
+    if (esProducto) {
+      final stockDisponible = item['stock'] as int? ?? 0;
+      final cantidadActual = item['cantidad'] as int;
+
+      if (cantidadActual >= stockDisponible) {
+        _mostrarMensaje(
+          'No hay más stock disponible para ${item['nombre']}. Stock: $stockDisponible',
+          isError: true,
+        );
+        return;
+      }
+    }
+
+    setState(() {
+      _itemsFactura[index]['cantidad'] += 1;
+      _calcularTotales();
+    });
+  }
+
+  void _reducirCantidad(int index) {
+    final cantidadActual = _itemsFactura[index]['cantidad'] as int;
+    if (cantidadActual > 1) {
+      setState(() {
+        _itemsFactura[index]['cantidad'] -= 1;
+        _calcularTotales();
+      });
+    }
+  }
+}
+
+class _MaxValueFormatter extends TextInputFormatter {
+  final int maxValue;
+
+  _MaxValueFormatter(this.maxValue);
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+    final intValue = int.tryParse(newValue.text);
+    if (intValue != null && intValue > maxValue) {
+      return oldValue;
+    }
+    return newValue;
   }
 }

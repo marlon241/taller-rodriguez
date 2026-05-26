@@ -22,7 +22,7 @@ class OfertaRepositoryImpl implements OfertaRepository {
       final datos = await _dataSource.select(
         'ofertas',
         filtros: "estado_oferta=eq.Activa&fecha_inicio=lte.$ahora&fecha_fin=gte.$ahora",
-        orderBy: 'order=fecha_fin.asc',
+        orderBy: 'fecha_fin.asc',
       );
       
       final ofertas = datos.map((json) => Oferta.fromJson(json)).toList();
@@ -42,7 +42,7 @@ class OfertaRepositoryImpl implements OfertaRepository {
     try {
       final datos = await _dataSource.select(
         'ofertas',
-        orderBy: 'order=fecha_fin.desc',
+        orderBy: 'fecha_fin.desc',
       );
       
       final ofertas = datos.map((json) => Oferta.fromJson(json)).toList();
@@ -99,6 +99,20 @@ class OfertaRepositoryImpl implements OfertaRepository {
   @override
   Future<bool> eliminarOferta(int id) async {
     return await _dataSource.delete('ofertas', 'id=eq.$id');
+  }
+  
+  @override
+  Future<bool> tieneFacturasAsociadas(int id) async {
+    try {
+      final datos = await _dataSource.select(
+        'facturacion',
+        filtros: 'id_oferta=eq.$id',
+        limit: 1,
+      );
+      return datos.isNotEmpty;
+    } catch (e) {
+      return false;
+    }
   }
   
   void dispose() {

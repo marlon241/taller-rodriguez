@@ -120,9 +120,7 @@ class RegistroAdmin extends StatelessWidget {
               ),
               
               const SizedBox(height: 18),
-              /////////////////////////
-              ///
-              ///
+          
               const Align(
                 alignment: Alignment.centerLeft,
                 child: Text(

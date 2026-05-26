@@ -41,7 +41,6 @@ class Producto extends Equatable {
   final int stock_maximo;
   final String? id_proveedor;
   final DateTime? ultima_actualizacion;
-  final bool estado;
 
   const Producto({
     required this.id,
@@ -57,7 +56,6 @@ class Producto extends Equatable {
     required this.stock_maximo,
     this.id_proveedor,
     this.ultima_actualizacion,
-    this.estado = true,
   });
 
   factory Producto.fromJson(String id, Map<String, dynamic> json) {
@@ -77,7 +75,6 @@ class Producto extends Equatable {
       ultima_actualizacion: json['ultima_actualizacion'] != null 
           ? DateTime.tryParse(json['ultima_actualizacion'].toString())
           : null,
-      estado: _toBool(json['estado']),
     );
   }
   
@@ -119,7 +116,6 @@ class Producto extends Equatable {
       'stock_maximo': stock_maximo,
       'id_proveedor': id_proveedor,
       'ultima_actualizacion': ultima_actualizacion?.toIso8601String(),
-      'estado': estado,
     };
   }
 
@@ -131,6 +127,6 @@ class Producto extends Equatable {
   List<Object?> get props => [
     id, nombre, tipo, clasificacion, descripcion, sku, 
     precio_compra, precio_venta, stock, stock_minimo, 
-    stock_maximo, id_proveedor, ultima_actualizacion, estado
+    stock_maximo, id_proveedor, ultima_actualizacion
   ];
 }

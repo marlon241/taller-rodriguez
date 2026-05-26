@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:frontend/services/inventario_api.dart';
 
-void mostrarModalSalidaStock(BuildContext context) {
-  String? producto;
-  String? tipoSalida;
+void mostrarModalSalidaStock(BuildContext context, String productoId, String productoNombre, int stockActual, {VoidCallback? onSuccess}) {
   final cantidadController = TextEditingController();
-  final clienteController = TextEditingController();
   final observacionesController = TextEditingController();
+  bool cargando = false;
+
+  final api = InventarioApi();
 
   showDialog(
     context: context,
@@ -22,40 +24,75 @@ void mostrarModalSalidaStock(BuildContext context) {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Center(
+                    Center(
                       child: Text(
-                        'Salida de Stock',
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, fontFamily: 'Itim'),
+                        'Salida de Stock - $productoNombre',
+                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, fontFamily: 'Itim'),
                       ),
                     ),
                     const SizedBox(height: 28),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _modalDropdown('Producto', producto,
-                            ['Bujia 10W-40', 'Aceite de caja', 'Refrigerante'],
-                            (val) => setModalState(() => producto = val)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(child: _modalTextField('Cantidad', cantidadController, keyboardType: TextInputType.number)),
-                      ],
+                    _modalTextField(
+                      'Cantidad',
+                      cantidadController,
+                      keyboardType: TextInputType.number,
+                      prefixIcon: Icons.remove_circle_outline,
+                      hintText: 'Stock actual: $stockActual',
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _modalDropdown('Tipo de salida', tipoSalida,
-                            ['Venta a cliente', 'Uso interno', 'Merma', 'Otro'],
-                            (val) => setModalState(() => tipoSalida = val)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(child: _modalTextField('Cliente', clienteController)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _modalTextField('Observaciones', observacionesController, maxLines: 4),
+                    _modalTextField('Observaciones (Opcional)', observacionesController, maxLines: 4),
                     const SizedBox(height: 28),
-                    _botonGuardar('Registrar Salida', () => Navigator.pop(context)),
+                    _botonGuardar(
+                      cargando ? 'Guardando...' : 'Registrar Salida',
+                      cargando ? null : () async {
+                        final cantidad = int.tryParse(cantidadController.text);
+                        if (cantidad == null || cantidad <= 0) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Ingrese una cantidad válida')),
+                            );
+                          }
+                          return;
+                        }
+
+                        if (cantidad > stockActual) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('La cantidad no puede exceder el stock actual ($stockActual)'), backgroundColor: Colors.red),
+                            );
+                          }
+                          return;
+                        }
+
+                        setModalState(() => cargando = true);
+
+                        final resultado = await api.salidaStock(
+                          productoId,
+                          cantidad,
+                          motivo: observacionesController.text.isNotEmpty ? observacionesController.text : null,
+                        );
+
+                        setModalState(() => cargando = false);
+
+                        if (resultado['success'] == true) {
+                          Navigator.pop(context);
+                          onSuccess?.call();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Stock reducido exitosamente'),
+                                backgroundColor: Colors.black,
+                              ),
+                            );
+                          }
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(resultado['message'] ?? 'Error al reducir stock'), backgroundColor: Colors.red),
+                            );
+                          }
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -68,7 +105,7 @@ void mostrarModalSalidaStock(BuildContext context) {
 }
 
 Widget _modalTextField(String label, TextEditingController controller,
-    {int maxLines = 1, String? prefix, TextInputType? keyboardType}) {
+    {int maxLines = 1, String? prefix, TextInputType? keyboardType, IconData? prefixIcon, IconData? suffixIcon, String? hintText}) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -78,8 +115,12 @@ Widget _modalTextField(String label, TextEditingController controller,
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
+        inputFormatters: keyboardType == TextInputType.number ? [FilteringTextInputFormatter.digitsOnly] : [],
         decoration: InputDecoration(
           prefixText: prefix,
+          prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.red) : null,
+          suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: Colors.red) : null,
+          hintText: hintText,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         ),
@@ -88,26 +129,7 @@ Widget _modalTextField(String label, TextEditingController controller,
   );
 }
 
-Widget _modalDropdown(String label, String? value, List<String> options, ValueChanged<String?> onChanged) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, fontFamily: 'Itim')),
-      const SizedBox(height: 6),
-      DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        ),
-        items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-        onChanged: onChanged,
-      ),
-    ],
-  );
-}
-
-Widget _botonGuardar(String label, VoidCallback onPressed) {
+Widget _botonGuardar(String label, VoidCallback? onPressed) {
   return SizedBox(
     width: double.infinity,
     height: 50,

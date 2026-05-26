@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../controllers/auth_controller.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:frontend/services/session_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,27 +16,47 @@ class _LoginPageState extends State<LoginPage> {
   bool _cargando = false;
   String _mensaje = '';
 
-  Future<void> _login() async {
-    setState(() {
-      _cargando = true;
-      _mensaje = '';
-    });
+Future<void> _login() async {
+  setState(() {
+    _cargando = true;
+    _mensaje = '';
+  });
 
-    final result = await AuthController.login(
-      _usuarioController.text,
-      _contrasenaController.text,
-    );
+  try {
+    final response = await Supabase.instance.client
+        .from('empleados')
+        .select()
+        .or('nombre.eq.${_usuarioController.text.trim()},dui.eq.${_usuarioController.text.trim()}')
+        .eq('contrasena', _contrasenaController.text.trim())
+        .eq('estado', true)
+        .limit(1);
 
+    if (response.isNotEmpty) {
+      final user = response.first;
+
+      // Guardar sesión del usuario
+      SessionService.iniciar(user);
+
+      setState(() {
+        _mensaje = '¡Bienvenido ${user['nombre']}!';
+        _cargando = false;
+      });
+
+      Navigator.pushReplacementNamed(context, '/dashboard');
+    } else {
+      setState(() {
+        _mensaje = 'Usuario, DUI o contraseña incorrectos';
+        _cargando = false;
+      });
+    }
+  } catch (e) {
     setState(() {
+      _mensaje = 'Error de conexión. Inténtalo de nuevo.';
       _cargando = false;
-      if (result['success'] == true) {
-        _mensaje = '¡Bienvenido ${result['data']['nombre']}!';
-        Navigator.pushReplacementNamed(context, '/dashboard');
-      } else {
-        _mensaje = result['message'];
-      }
     });
+    print('Error en login: $e'); // Solo para debug en consola
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -95,7 +117,7 @@ class _LoginPageState extends State<LoginPage> {
               TextField(
                 controller: _usuarioController,
                 decoration: InputDecoration(
-                  hintText: "Ingresa tu usuario o DUI",
+                  hintText: "Ingresa tu usuario",
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -135,9 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: Text(
                     _mensaje,
                     style: TextStyle(
-                      color: _mensaje.contains('Bienvenido')
-                          ? Colors.green
-                          : Colors.red,
+                      color: _mensaje.contains('Bienvenido') ? Colors.green : Colors.red,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

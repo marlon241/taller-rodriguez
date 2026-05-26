@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frontend/widgets/navigation/sidebar.dart';
 import 'package:frontend/widgets/inputs/busqueda.dart';
 import 'package:frontend/widgets/modals/agregar_empleado_modal.dart';
-import 'package:frontend/widgets/modals/exito_modal.dart';
+import 'package:frontend/models/empleado_back.dart';
+import 'package:frontend/services/empleado_service.dart';
 
 class EmpleadosPage extends StatefulWidget {
   const EmpleadosPage({super.key});
@@ -14,32 +15,17 @@ class EmpleadosPage extends StatefulWidget {
 class _EmpleadosPageState extends State<EmpleadosPage> {
   final TextEditingController _searchController = TextEditingController();
 
-  // Datos de ejemplo — reemplazar con datos reales del backend
-  final List<Map<String, String>> _empleados = [
-    // {
-    //   'nombre': 'Juan Pérez',
-    //   'telefono': '6005 5989',
-    //   'dui': '03945218-6',
-    //   'porcentaje': '65%',
-    //   'sueldo': '\$ 600.00',
-    // },
-    // {
-    //   'nombre': 'María Gómez',
-    //   'telefono': '6050 2116',
-    //   'dui': '08412955-3',
-    //   'porcentaje': 'Sin porcentaje',
-    //   'sueldo': '\$ 400.00',
-    // },
-    // {
-    //   'nombre': 'Jared Amaya',
-    //   'telefono': '6444 3934',
-    //   'dui': '01763824-9',
-    //   'porcentaje': 'Sin porcentaje',
-    //   'sueldo': '\$ 360.00',
-    // },
-  ];
+  List<Empleado> _empleados = [];
+  bool _loading = true;
+  String? _error;
 
   static const Color _headerBg = Color(0xFFC0392B);
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarEmpleados();
+  }
 
   @override
   void dispose() {
@@ -47,15 +33,72 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
     super.dispose();
   }
 
-  List<Map<String, String>> get _empleadosFiltrados {
+  Future<void> _cargarEmpleados() async {
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+    try {
+      final data = await EmpleadoService.getAll();
+      if (mounted) setState(() => _empleados = data);
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _eliminarEmpleado(int id) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar empleado'),
+        content: const Text(
+            '¿Estás seguro de que deseas eliminar este empleado?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: _headerBg),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar != true) return;
+
+    try {
+      await EmpleadoService.delete(id);
+      await _cargarEmpleados();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al eliminar: $e')),
+        );
+      }
+    }
+  }
+
+  List<Empleado> get _empleadosFiltrados {
     final query = _searchController.text.toLowerCase();
     if (query.isEmpty) return _empleados;
     return _empleados.where((e) {
-      return e['nombre']!.toLowerCase().contains(query) ||
-          e['telefono']!.toLowerCase().contains(query) ||
-          e['dui']!.toLowerCase().contains(query);
+      return e.nombre.toLowerCase().contains(query) ||
+          e.telefono.toLowerCase().contains(query) ||
+          e.dui.toLowerCase().contains(query);
     }).toList();
   }
+
+  String _formatSueldo(double sueldo) => '\$ ${sueldo.toStringAsFixed(2)}';
+
+  String _formatPorcentaje(double? porcentaje) =>
+      porcentaje != null
+          ? '${porcentaje.toStringAsFixed(0)}%'
+          : 'Sin porcentaje';
 
   @override
   Widget build(BuildContext context) {
@@ -68,82 +111,110 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
         children: [
           const Sidebar(),
           Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Título
-                  if (isWide)
-                    const Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 25),
-                      child: Text(
-                        'Empleados',
-                        style: TextStyle(
-                          fontSize: 42,
-                          fontWeight: FontWeight.bold,
-                          fontFamily: 'Itim',
+            child: _loading
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                    ? _buildErrorState()
+                    : SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (isWide)
+                              const Padding(
+                                padding:
+                                    EdgeInsets.symmetric(horizontal: 25),
+                                child: Text(
+                                  'Empleados',
+                                  style: TextStyle(
+                                    fontSize: 42,
+                                    fontWeight: FontWeight.bold,
+                                    fontFamily: 'Itim',
+                                  ),
+                                ),
+                              ),
+                            if (isWide) const SizedBox(height: 16),
+
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 25),
+                              child: SearchField(
+                                hint: 'Buscar Empleado',
+                                controller: _searchController,
+                                onChanged: (val) => setState(() {}),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            isWide
+                                ? Container(
+                                    margin: const EdgeInsets.symmetric(
+                                        horizontal: 25),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius:
+                                          BorderRadius.circular(15),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black
+                                              .withValues(alpha: 0.15),
+                                          blurRadius: 20,
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                                    ),
+                                    child: _empleadosFiltrados.isEmpty
+                                        ? _buildEmptyState()
+                                        : _buildTable(),
+                                  )
+                                : _empleadosFiltrados.isEmpty
+                                    ? _buildEmptyStateMobile()
+                                    : _buildCardList(),
+
+                            const SizedBox(height: 20),
+
+                            Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(horizontal: 25),
+                              child: isWide
+                                  ? Center(
+                                      child: _AgregarEmpleadoButton(
+                                          isWide: isWide,
+                                          onEmpleadoAgregado:
+                                              _cargarEmpleados))
+                                  : _AgregarEmpleadoButton(
+                                      isWide: isWide,
+                                      onEmpleadoAgregado: _cargarEmpleados),
+                            ),
+                          ],
                         ),
                       ),
-                    ),
-                  if (isWide) const SizedBox(height: 16),
-
-                  // Barra de búsqueda
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
-                    child: SearchField(
-                      hint: 'Buscar Empleado',
-                      controller: _searchController,
-                      onChanged: (val) => setState(() {}),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Tabla (wide) o Tarjetas (móvil)
-                  isWide
-                      ? Container(
-                          margin: const EdgeInsets.symmetric(horizontal: 25),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(15),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withValues(alpha: 0.15),
-                                blurRadius: 20,
-                                offset: const Offset(0, 10),
-                              ),
-                            ],
-                          ),
-                          child: _empleadosFiltrados.isEmpty
-                              ? _buildEmptyState()
-                              : _buildTable(),
-                        )
-                      : _empleadosFiltrados.isEmpty
-                          ? _buildEmptyStateMobile()
-                          : _buildCardList(),
-
-                  const SizedBox(height: 20),
-
-                  // Botón agregar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25),
-                    child: isWide
-                        ? Center(
-                            child: _AgregarEmpleadoButton(isWide: isWide))
-                        : _AgregarEmpleadoButton(isWide: isWide),
-                  ),
-                ],
-              ),
-            ),
           ),
         ],
       ),
     );
   }
 
-  // ─────────────────────────────────────────
-  // MODO ESCRITORIO — tabla
-  // ─────────────────────────────────────────
+  Widget _buildErrorState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.error_outline, size: 60, color: Colors.red),
+          const SizedBox(height: 16),
+          const Text('Error al cargar empleados',
+              style: TextStyle(fontWeight: FontWeight.bold)),
+          const SizedBox(height: 8),
+          Text(_error ?? '', style: const TextStyle(color: Colors.grey)),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _cargarEmpleados,
+            child: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildEmptyState() {
     return SizedBox(
@@ -192,45 +263,36 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               child: Row(
                 children: [
-                  // Nombre + teléfono
                   Expanded(
                     flex: 3,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          e['nombre']!,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
+                        Text(e.nombre,
+                            style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14)),
                         const SizedBox(height: 2),
-                        Text(
-                          e['telefono']!,
-                          style: const TextStyle(
-                              fontSize: 13, color: Colors.grey),
-                        ),
+                        Text(e.telefono,
+                            style: const TextStyle(
+                                fontSize: 13, color: Colors.grey)),
                       ],
                     ),
                   ),
-                  // DUI
                   Expanded(
-                    flex: 2,
-                    child: Text(e['dui']!,
-                        style: const TextStyle(fontSize: 13)),
-                  ),
-                  // Porcentaje de ganancia
+                      flex: 2,
+                      child: Text(e.dui,
+                          style: const TextStyle(fontSize: 13))),
                   Expanded(
                     flex: 3,
-                    child: Text(e['porcentaje']!,
+                    child: Text(_formatPorcentaje(e.porcentajeGanancia),
                         style: const TextStyle(fontSize: 13)),
                   ),
-                  // Sueldo base
                   Expanded(
                     flex: 2,
-                    child: Text(e['sueldo']!,
+                    child: Text(_formatSueldo(e.sueldoBase),
                         style: const TextStyle(fontSize: 13)),
                   ),
-                  // Acciones
                   Expanded(
                     flex: 3,
                     child: Row(
@@ -238,13 +300,21 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
                         _AccionButton(
                           label: 'Editar',
                           color: const Color(0xFFC0392B),
-                          onTap: () {},
+                          onTap: () async {
+                            await showDialog(
+                              context: context,
+                              builder: (context) => AgregarEmpleadoModal(
+                                empleado: e,
+                              ),
+                            );
+                            _cargarEmpleados();
+                          },
                         ),
                         const SizedBox(width: 8),
                         _AccionButton(
                           label: 'Eliminar',
                           color: const Color(0xFF7B1111),
-                          onTap: () {},
+                          onTap: () => _eliminarEmpleado(e.id!),
                         ),
                       ],
                     ),
@@ -260,15 +330,10 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
 
   Widget _buildTableHeader() {
     const style = TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.bold,
-      fontSize: 13,
-    );
+        color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: const BoxDecoration(
-        color: _headerBg,
-      ),
+      decoration: const BoxDecoration(color: _headerBg),
       child: const Row(
         children: [
           Expanded(flex: 3, child: Text('Nombre / Teléfono', style: style)),
@@ -282,10 +347,6 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
       ),
     );
   }
-
-  // ─────────────────────────────────────────
-  // MODO MÓVIL — tarjetas
-  // ─────────────────────────────────────────
 
   Widget _buildEmptyStateMobile() {
     return const Padding(
@@ -335,10 +396,9 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Cabecera roja
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 10),
                 decoration: const BoxDecoration(
                   color: _headerBg,
                   borderRadius:
@@ -350,46 +410,39 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            e['nombre']!,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 15,
-                            ),
-                          ),
-                          Text(
-                            e['telefono']!,
-                            style: const TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
+                          Text(e.nombre,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              )),
+                          Text(e.telefono,
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontSize: 12,
+                              )),
                         ],
                       ),
                     ),
                   ],
                 ),
               ),
-
-              // Cuerpo
               Padding(
                 padding: const EdgeInsets.all(14),
                 child: Column(
                   children: [
-                    _cardRow('DUI', e['dui']!),
+                    _cardRow('DUI', e.dui),
                     const SizedBox(height: 6),
-                    _cardRow('% Ganancia', e['porcentaje']!),
+                    _cardRow('% Ganancia',
+                        _formatPorcentaje(e.porcentajeGanancia)),
                     const SizedBox(height: 6),
-                    _cardRow('Sueldo base', e['sueldo']!),
+                    _cardRow('Sueldo base', _formatSueldo(e.sueldoBase)),
                   ],
                 ),
               ),
-
-              // Acciones
               Padding(
-                padding:
-                    const EdgeInsets.only(left: 14, right: 14, bottom: 14),
+                padding: const EdgeInsets.only(
+                    left: 14, right: 14, bottom: 14),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -401,7 +454,15 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
                           child: _AccionButton(
                             label: 'Editar',
                             color: const Color(0xFFC0392B),
-                            onTap: () {},
+                            onTap: () async {
+                              await showDialog(
+                                context: context,
+                                builder: (context) => AgregarEmpleadoModal(
+                                  empleado: e,
+                                ),
+                              );
+                              _cargarEmpleados();
+                            },
                             fullWidth: true,
                           ),
                         ),
@@ -410,7 +471,7 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
                           child: _AccionButton(
                             label: 'Eliminar',
                             color: const Color(0xFF7B1111),
-                            onTap: () {},
+                            onTap: () => _eliminarEmpleado(e.id!),
                             fullWidth: true,
                           ),
                         ),
@@ -431,26 +492,21 @@ class _EmpleadosPageState extends State<EmpleadosPage> {
       children: [
         SizedBox(
           width: 100,
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.grey,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
+          child: Text(label,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              )),
         ),
         Expanded(
-          child: Text(value, style: const TextStyle(fontSize: 13)),
-        ),
+            child: Text(value, style: const TextStyle(fontSize: 13))),
       ],
     );
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BOTÓN DE ACCIÓN (Editar / Eliminar) con hover
-// ─────────────────────────────────────────────────────────────────────────────
+
 class _AccionButton extends StatefulWidget {
   final String label;
   final Color color;
@@ -484,7 +540,8 @@ class _AccionButtonState extends State<_AccionButton> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: widget.fullWidth ? double.infinity : null,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: _hovered ? hoverColor : widget.color,
             borderRadius: BorderRadius.circular(6),
@@ -514,12 +571,15 @@ class _AccionButtonState extends State<_AccionButton> {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BOTÓN AGREGAR NUEVO EMPLEADO con hover
-// ─────────────────────────────────────────────────────────────────────────────
+
 class _AgregarEmpleadoButton extends StatefulWidget {
   final bool isWide;
-  const _AgregarEmpleadoButton({required this.isWide});
+  final VoidCallback onEmpleadoAgregado;
+
+  const _AgregarEmpleadoButton({
+    required this.isWide,
+    required this.onEmpleadoAgregado,
+  });
 
   @override
   State<_AgregarEmpleadoButton> createState() =>
@@ -539,16 +599,18 @@ class _AgregarEmpleadoButtonState extends State<_AgregarEmpleadoButton> {
       onEnter: (_) => setState(() => _hovered = true),
       onExit: (_) => setState(() => _hovered = false),
       child: GestureDetector(
-        onTap: () {
-  showDialog(
-    context: context,
-    builder: (context) => const AgregarEmpleadoModal(),
-  );
-},
+        onTap: () async {
+          await showDialog(
+            context: context,
+            builder: (context) => const AgregarEmpleadoModal(),
+          );
+          widget.onEmpleadoAgregado();
+        },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 150),
           width: widget.isWide ? 400 : double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+          padding:
+              const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
           decoration: BoxDecoration(
             color: _hovered ? _hover : _base,
             borderRadius: BorderRadius.circular(8),

@@ -1,50 +1,83 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:frontend/services/session_service.dart';
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'session_service.dart';
 
 class SupabaseService {
-  static const String _baseUrl = 'http://localhost:8080/api';
+  
+  static final _client = Supabase.instance.client;
 
-  // LOGIN
-  static Future<Map<String, dynamic>> login(String usuario, String contrasena) async {
+  // ====================== LOGIN ======================
+  static Future<Map<String, dynamic>> login(
+    String usuario,
+    String contrasena,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/login'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'usuario': usuario,
-          'contrasena': contrasena,
-        }),
-      );
+      final response = await _client
+          .from('empleados')
+          .select()
+          .or('nombre.eq.$usuario,dui.eq.$usuario')
+          .eq('contrasena', contrasena)
+          .eq('estado', true)
+          .limit(1);
 
-      final data = jsonDecode(response.body);
-      return Map<String, dynamic>.from(data);
+      if (response.isNotEmpty) {
+        final user = response.first;
+
+        SessionService.iniciar(user);   // Guardar sesión
+
+        return {
+          'success': true,
+          'message': '¡Bienvenido ${user['nombre']}!',
+          'empleado': user,
+        };
+      } else {
+        return {
+          'success': false,
+          'message': 'Usuario o contraseña incorrectos',
+        };
+      }
     } catch (e) {
+      print('Error en login: $e');
       return {
         'success': false,
-        'message': 'Error al conectar con el servidor: $e',
+        'message': 'Error de conexión',
       };
     }
   }
 
-  // REGISTRO DE ADMINISTRADOR
-  static Future<Map<String, dynamic>> registrarAdmin(Map<String, dynamic> datos) async {
+  // ====================== REGISTRO ADMIN ======================
+  static Future<Map<String, dynamic>> registrarAdmin(
+    Map<String, dynamic> datos,
+  ) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_baseUrl/registro-admin'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'nombre': datos['nombre'],
-          'contrasena': datos['contrasena'],
-          'confirmar_contrasena': datos['confirmar_contrasena'],
-        }),
-      );
+      final response = await _client
+          .from('empleados')
+          .insert({
+            'nombre': datos['nombre'],
+            'dui': datos['dui'] ?? 'TEMP-${DateTime.now().millisecondsSinceEpoch}',
+            'telefono': datos['telefono'] ?? '00000000',
+            'fecha_contratacion': DateTime.now().toIso8601String().split('T')[0],
+            'sueldo_base': datos['sueldo_base'] ?? 0,
+            'contrasena': datos['contrasena'],
+            'cargo': 'Administrador',
+            'tipo_empleado': datos['tipo_empleado'] ?? 'contratado',
+            'estado': true,
+          })
+          .select()
+          .single();
 
-      final data = jsonDecode(response.body);
-      return Map<String, dynamic>.from(data);
+      return {
+        'success': true,
+        'message': 'Administrador registrado correctamente',
+        'data': response,
+      };
     } catch (e) {
+      print('Error al registrar admin: $e');
       return {
         'success': false,
-        'message': 'Error al conectar con el servidor: $e',
+        'message': 'Error al registrar',
       };
     }
   }

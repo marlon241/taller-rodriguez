@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:frontend/services/inventario_api.dart';
 
-void mostrarModalEntradaStock(BuildContext context) {
-  String? producto;
-  String? proveedor;
+void mostrarModalEntradaStock(BuildContext context, String productoId, String productoNombre, {VoidCallback? onSuccess}) {
   final cantidadController = TextEditingController();
-  final motivoController = TextEditingController();
   final observacionesController = TextEditingController();
+  bool cargando = false;
+
+  final api = InventarioApi();
 
   showDialog(
     context: context,
@@ -22,40 +24,74 @@ void mostrarModalEntradaStock(BuildContext context) {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Center(
+                    Center(
                       child: Text(
-                        'Entrada de Stock',
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold, fontFamily: 'Itim'),
+                        'Entrada de Stock - $productoNombre',
+                        style: const TextStyle(fontSize: 26, fontWeight: FontWeight.bold, fontFamily: 'Itim'),
                       ),
                     ),
                     const SizedBox(height: 28),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _modalDropdown('Producto', producto,
-                            ['Bujia 10W-40', 'Aceite de caja', 'Refrigerante'],
-                            (val) => setModalState(() => producto = val)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(child: _modalTextField('Cantidad', cantidadController, keyboardType: TextInputType.number)),
-                      ],
+                    _modalTextField(
+                      'Cantidad',
+                      cantidadController,
+                      keyboardType: TextInputType.number,
+                      prefixIcon: Icons.add_circle_outline,
                     ),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _modalDropdown('Proveedor', proveedor,
-                            ['Proveedor A', 'Proveedor B', 'Proveedor C'],
-                            (val) => setModalState(() => proveedor = val)),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(child: _modalTextField('Motivo', motivoController)),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    _modalTextField('Observaciones', observacionesController, maxLines: 4),
+                    _modalTextField('Observaciones (Opcional)', observacionesController, maxLines: 4),
                     const SizedBox(height: 28),
-                    _botonGuardar('Registrar Entrada', () => Navigator.pop(context)),
+                    _botonGuardar(
+                      cargando ? 'Guardando...' : 'Registrar Entrada',
+                      cargando ? null : () async {
+                        final cantidad = int.tryParse(cantidadController.text);
+                        if (cantidad == null || cantidad <= 0) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Ingrese una cantidad válida')),
+                            );
+                          }
+                          return;
+                        }
+                        
+                        if (cantidad > 999) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('La cantidad no puede exceder 999 unidades'), backgroundColor: Colors.red),
+                            );
+                          }
+                          return;
+                        }
+
+                        setModalState(() => cargando = true);
+
+                        final resultado = await api.entradaStock(
+                          productoId,
+                          cantidad,
+                          motivo: observacionesController.text.isNotEmpty ? observacionesController.text : null,
+                        );
+
+                        setModalState(() => cargando = false);
+
+                        if (resultado['success'] == true) {
+                          Navigator.pop(context);
+                          onSuccess?.call();
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Stock agregado exitosamente'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        } else {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text(resultado['message'] ?? 'Error al agregar stock'), backgroundColor: Colors.red),
+                            );
+                          }
+                        }
+                      },
+                    ),
                   ],
                 ),
               ),
@@ -68,46 +104,49 @@ void mostrarModalEntradaStock(BuildContext context) {
 }
 
 Widget _modalTextField(String label, TextEditingController controller,
-    {int maxLines = 1, String? prefix, TextInputType? keyboardType}) {
+    {int maxLines = 1, String? prefix, TextInputType? keyboardType, IconData? prefixIcon, IconData? suffixIcon, Function(String)? onChanged}) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, fontFamily: 'Itim')),
       const SizedBox(height: 6),
-      TextField(
-        controller: controller,
-        maxLines: maxLines,
-        keyboardType: keyboardType,
-        decoration: InputDecoration(
-          prefixText: prefix,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        ),
+      Builder(
+        builder: (ctx) {
+          return TextField(
+            controller: controller,
+            maxLines: maxLines,
+            keyboardType: keyboardType,
+            inputFormatters: [
+              FilteringTextInputFormatter.digitsOnly,
+              LengthLimitingTextInputFormatter(3),
+            ],
+            onChanged: (value) {
+              final cantidad = int.tryParse(value) ?? 0;
+              if (cantidad > 999) {
+                controller.text = '999';
+                controller.selection = TextSelection.fromPosition(TextPosition(offset: controller.text.length));
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text('La cantidad no puede exceder 999 unidades'), backgroundColor: Colors.red),
+                );
+                return;
+              }
+              onChanged?.call(value);
+            },
+            decoration: InputDecoration(
+              prefixText: prefix,
+              prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.green) : null,
+              suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: Colors.green) : null,
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            ),
+          );
+        },
       ),
     ],
   );
 }
 
-Widget _modalDropdown(String label, String? value, List<String> options, ValueChanged<String?> onChanged) {
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w500, fontFamily: 'Itim')),
-      const SizedBox(height: 6),
-      DropdownButtonFormField<String>(
-        value: value,
-        decoration: InputDecoration(
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        ),
-        items: options.map((o) => DropdownMenuItem(value: o, child: Text(o))).toList(),
-        onChanged: onChanged,
-      ),
-    ],
-  );
-}
-
-Widget _botonGuardar(String label, VoidCallback onPressed) {
+Widget _botonGuardar(String label, VoidCallback? onPressed) {
   return SizedBox(
     width: double.infinity,
     height: 50,

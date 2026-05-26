@@ -30,9 +30,12 @@ extension TipoProductoExtension on TipoProducto {
 class DetalleFactura extends Equatable {
   final int? id;
   final int? id_factura;
-  final String id_producto_firebase;
+  final String id_producto;
   final String nombre_producto;
-  final TipoProducto tipo_producto;
+  final String tipo_producto;
+  final String? clasificacion;
+  final String? descripcion;
+  final String? sku;
   final int cantidad;
   final double precio_unitario;
   final double subtotal;
@@ -40,27 +43,36 @@ class DetalleFactura extends Equatable {
   const DetalleFactura({
     this.id,
     this.id_factura,
-    required this.id_producto_firebase,
+    required this.id_producto,
     required this.nombre_producto,
     required this.tipo_producto,
+    this.clasificacion,
+    this.descripcion,
+    this.sku,
     required this.cantidad,
     required this.precio_unitario,
     required this.subtotal,
   });
 
   factory DetalleFactura.crear({
-    required String id_producto_firebase,
+    required String id_producto,
     required String nombre_producto,
-    required TipoProducto tipo_producto,
+    required String tipo_producto,
+    String? clasificacion,
+    String? descripcion,
+    String? sku,
     required int cantidad,
     required double precio_unitario,
     int? id_factura,
   }) {
     final subtotal = cantidad * precio_unitario;
     return DetalleFactura(
-      id_producto_firebase: id_producto_firebase,
+      id_producto: id_producto,
       nombre_producto: nombre_producto,
       tipo_producto: tipo_producto,
+      clasificacion: clasificacion,
+      descripcion: descripcion,
+      sku: sku,
       cantidad: cantidad,
       precio_unitario: precio_unitario,
       subtotal: subtotal,
@@ -72,9 +84,12 @@ class DetalleFactura extends Equatable {
     return DetalleFactura(
       id: json['id'] as int?,
       id_factura: json['id_factura'] as int?,
-      id_producto_firebase: json['id_producto_firebase'] as String? ?? '',
+      id_producto: (json['id_producto'] ?? json['id_producto_firebase'] ?? '').toString(),
       nombre_producto: json['nombre_producto'] as String? ?? '',
-      tipo_producto: TipoProductoExtension.fromString(json['tipo_producto'] as String? ?? ''),
+      tipo_producto: json['tipo_producto'] as String? ?? 'Producto',
+      clasificacion: json['clasificacion'] as String?,
+      descripcion: json['descripcion'] as String?,
+      sku: json['sku'] as String?,
       cantidad: json['cantidad'] as int? ?? 1,
       precio_unitario: (json['precio_unitario'] as num?)?.toDouble() ?? 0,
       subtotal: (json['subtotal'] as num?)?.toDouble() ?? 0,
@@ -85,9 +100,12 @@ class DetalleFactura extends Equatable {
     return {
       if (id != null) 'id': id,
       if (id_factura != null) 'id_factura': id_factura,
-      'id_producto_firebase': id_producto_firebase,
+      'id_producto': id_producto,
       'nombre_producto': nombre_producto,
-      'tipo_producto': tipo_producto.valor,
+      'tipo_producto': tipo_producto,
+      if (clasificacion != null) 'clasificacion': clasificacion,
+      if (descripcion != null) 'descripcion': descripcion,
+      if (sku != null) 'sku': sku,
       'cantidad': cantidad,
       'precio_unitario': precio_unitario,
       'subtotal': subtotal,
@@ -95,5 +113,5 @@ class DetalleFactura extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, id_factura, id_producto_firebase, nombre_producto, tipo_producto, cantidad, precio_unitario, subtotal];
+  List<Object?> get props => [id, id_factura, id_producto, nombre_producto, tipo_producto, clasificacion, descripcion, sku, cantidad, precio_unitario, subtotal];
 }

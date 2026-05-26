@@ -31,7 +31,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
+    
+  supabase_flutter: ^2.12.4
+  image_picker: ^1.1.2
+  shared_preferences: ^2.3.2
+  equatable: ^2.0.5
+     
+  
     
 
   # The following adds the Cupertino Icons font to your application.
@@ -39,10 +45,16 @@ dependencies:
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   fl_chart: ^0.68.0  
+  flutter_dotenv: ^6.0.1
+  pdf: ^3.11.0
+  open_filex: ^4.5.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  
+    
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -57,9 +69,12 @@ dev_dependencies:
 # The following section is specific to Flutter packages.
 flutter:
   uses-material-design: true
+
   assets:
     - assets/logo_taller.png
-    - assets/
+    - assets/sidebar_false/
+    - assets/sidebar_true/
+    - assets/fonts/
 
   fonts:
     - family: Itim

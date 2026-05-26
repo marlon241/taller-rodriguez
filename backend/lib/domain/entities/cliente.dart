@@ -5,6 +5,7 @@ class Cliente extends Equatable {
   final String nombre;
   final String telefono;
   final String dui;
+  final String rtn;
   final String correo;
   final String direccion;
   final String frecuencia_visita;
@@ -16,6 +17,7 @@ class Cliente extends Equatable {
     required this.nombre,
     required this.telefono,
     required this.dui,
+    this.rtn = '',
     required this.correo,
     required this.direccion,
     required this.frecuencia_visita,
@@ -29,6 +31,7 @@ class Cliente extends Equatable {
       nombre: json['nombre'] as String? ?? '',
       telefono: json['telefono'] as String? ?? '',
       dui: json['dui'] as String? ?? '',
+      rtn: json['rtn'] as String? ?? '',
       correo: json['correo'] as String? ?? '',
       direccion: json['direccion'] as String? ?? '',
       frecuencia_visita: json['frecuencia_visita'] as String? ?? 'Regular',
@@ -45,6 +48,7 @@ class Cliente extends Equatable {
       'nombre': nombre,
       'telefono': telefono,
       'dui': dui,
+      'rtn': rtn,
       'correo': correo,
       'direccion': direccion,
       'frecuencia_visita': frecuencia_visita,
@@ -54,5 +58,5 @@ class Cliente extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, nombre, telefono, dui, correo, direccion, frecuencia_visita, estado, fecha_registro];
+  List<Object?> get props => [id, nombre, telefono, dui, rtn, correo, direccion, frecuencia_visita, estado, fecha_registro];
 }

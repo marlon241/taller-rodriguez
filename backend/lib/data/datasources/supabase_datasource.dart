@@ -5,10 +5,14 @@ import '../../config/credenciales.dart';
 
 class SupabaseDataSource {
   final http.Client _client;
+  final bool _useServiceRole;
 
-  SupabaseDataSource({http.Client? client}) : _client = client ?? http.Client();
+  SupabaseDataSource({http.Client? client, bool useServiceRole = false}) 
+      : _client = client ?? http.Client(),
+        _useServiceRole = useServiceRole;
 
-  Map<String, String> get _headers => SupabaseHeaders.headers;
+  Map<String, String> get _headers => 
+      _useServiceRole ? SupabaseHeaders.serviceHeaders : SupabaseHeaders.headers;
 
   String get _baseUrl {
     final url = Credenciales.supabaseUrl;
@@ -30,7 +34,7 @@ class SupabaseDataSource {
       queryParams = '?$filtros';
     }
     if (orderBy != null && orderBy.isNotEmpty) {
-      queryParams += queryParams.isEmpty ? '?$orderBy' : '&$orderBy';
+      queryParams += queryParams.isEmpty ? '?order=$orderBy' : '&order=$orderBy';
     }
     if (limit != null) {
       queryParams += queryParams.isEmpty ? '?limit=$limit' : '&limit=$limit';
@@ -112,7 +116,7 @@ class SupabaseDataSource {
       body: _encodeJson(data),
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 200 || response.statusCode == 204) {
       return data;
     }
 

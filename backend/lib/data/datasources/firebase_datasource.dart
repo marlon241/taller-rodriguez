@@ -83,7 +83,12 @@ class FirebaseDataSource {
     final response = await _client.post(url, headers: _headers, body: body);
 
     if (response.statusCode == 200 || response.statusCode == 201) {
-      return data;
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      final name = responseData['name'] as String?;
+      final documentId = name?.split('/').last ?? '';
+      final result = Map<String, dynamic>.from(data);
+      result['id'] = documentId;
+      return result;
     }
 
     throw Exception(
@@ -96,12 +101,26 @@ class FirebaseDataSource {
     String documentoId,
     Map<String, dynamic> data,
   ) async {
+    final docActual = await getDocument(coleccion, documentoId);
+    
+    if (docActual == null) {
+      return false;
+    }
+    
+    final Map<String, dynamic> datosCompletos = {};
+    docActual.forEach((key, value) {
+      datosCompletos[key] = value;
+    });
+    
+    data.forEach((key, value) {
+      datosCompletos[key] = value;
+    });
+    
     final url = Uri.parse('$_baseUrl/$coleccion/$documentoId');
-
-    final body = _encodeFirestoreDocument(data);
-
+    final body = _encodeFirestoreDocument(datosCompletos);
+    
     final response = await _client.patch(url, headers: _headers, body: body);
-
+    
     return response.statusCode == 200 || response.statusCode == 204;
   }
 

@@ -20,7 +20,7 @@ class VehiculoRepositoryImpl implements VehiculoRepository {
     try {
       final datos = await _dataSource.select(
         'vehiculos',
-        orderBy: 'order=fecha_ingreso.desc',
+        orderBy: 'fecha_ingreso.desc',
       );
       
       final vehiculos = datos.map((json) => Vehiculo.fromJson(json)).toList();
@@ -41,7 +41,7 @@ class VehiculoRepositoryImpl implements VehiculoRepository {
       final datos = await _dataSource.select(
         'vehiculos',
         filtros: 'id_cliente=eq.$idCliente',
-        orderBy: 'order=fecha_ingreso.desc',
+        orderBy: 'fecha_ingreso.desc',
       );
       
       final vehiculos = datos.map((json) => Vehiculo.fromJson(json)).toList();
@@ -96,7 +96,7 @@ class VehiculoRepositoryImpl implements VehiculoRepository {
       final datos = await _dataSource.select(
         'vehiculos',
         filtros: 'or(placa.ilike.*$query*,marca.ilike.*$query*,modelo.ilike.*$query*)',
-        orderBy: 'order=fecha_ingreso.desc',
+        orderBy: 'fecha_ingreso.desc',
       );
       
       final vehiculos = datos.map((json) => Vehiculo.fromJson(json)).toList();
