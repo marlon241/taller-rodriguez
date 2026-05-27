@@ -27,4 +27,8 @@ abstract class InventarioRepository {
   Future<int> obtenerStockProducto(String id);
 
   Future<bool> eliminarProducto(String id);
+
+  Future<bool> restarStockProducto(String id, int cantidad);
+
+  Future<bool> restarStockServicio(String id, int cantidad);
 }

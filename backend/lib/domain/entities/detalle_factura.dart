@@ -112,6 +112,9 @@ class DetalleFactura extends Equatable {
     };
   }
 
+  bool get esProducto => tipo_producto.toLowerCase() == 'producto';
+  bool get esServicio => tipo_producto.toLowerCase() == 'servicio';
+
   @override
   List<Object?> get props => [id, id_factura, id_producto, nombre_producto, tipo_producto, clasificacion, descripcion, sku, cantidad, precio_unitario, subtotal];
 }
