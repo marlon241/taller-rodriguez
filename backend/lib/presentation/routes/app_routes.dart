@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
@@ -7,6 +8,7 @@ import '../controllers/oferta_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/inventario_controller.dart';
 import '../controllers/proveedor_controller.dart';
+import '../controllers/pdf_controller.dart';
 
 class AppRoutes {
   final FacturacionController _facturacionController;
@@ -14,13 +16,15 @@ class AppRoutes {
   final AuthController _authController;
   final InventarioController _inventarioController;
   final ProveedorController _proveedorController;
+  final PdfController _pdfController;
 
   AppRoutes()
       : _facturacionController = getIt<FacturacionController>(),
         _ofertaController = getIt<OfertaController>(),
         _authController = getIt<AuthController>(),
         _inventarioController = getIt<InventarioController>(),
-        _proveedorController = getIt<ProveedorController>();
+        _proveedorController = getIt<ProveedorController>(),
+        _pdfController = getIt<PdfController>();
   
   Router get router {
     final router = Router();
@@ -51,6 +55,7 @@ class AppRoutes {
     router.delete('/api/inventario/<id>', _eliminarProducto);
 
     router.get('/api/facturas', _obtenerFacturas);
+    router.get('/api/facturas/<id>/pdf', _generarPdfFactura);
     router.post('/api/facturas', _crearFactura);
     router.delete('/api/facturas/<id>', _eliminarFactura);
 
@@ -321,6 +326,38 @@ class AppRoutes {
     }
     final resultado = await _facturacionController.eliminarFactura(idInt);
     return Response.ok(resultado, headers: _jsonHeaders);
+  }
+
+  Future<Response> _generarPdfFactura(Request request, String id) async {
+    final idInt = int.tryParse(id);
+    if (idInt == null) {
+      return Response.badRequest(
+        body: json.encode({'success': false, 'message': 'ID invalido'}),
+        headers: _jsonHeaders,
+      );
+    }
+
+    try {
+      final bytes = await _pdfController.generarPdfPorId(idInt).first;
+      final stream = Stream.value(bytes);
+      return Response(
+        200,
+        body: stream,
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Length': '${bytes.length}',
+          'Content-Disposition': 'attachment; filename="factura_$id.pdf"',
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'GET, OPTIONS',
+          'Access-Control-Allow-Headers': 'Accept, Content-Type',
+        },
+      );
+    } catch (e) {
+      return Response.internalServerError(
+        body: json.encode({'success': false, 'message': 'Error al generar PDF: $e'}),
+        headers: _jsonHeaders,
+      );
+    }
   }
 
   Future<Response> _obtenerProveedores(Request request) async {

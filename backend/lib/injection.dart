@@ -1,26 +1,31 @@
 import 'package:get_it/get_it.dart';
 import 'data/datasources/supabase_datasource.dart';
 import 'data/datasources/firebase_datasource.dart';
+import 'data/datasources/pdf_datasource.dart';
 import 'data/repositories/repositorio_cliente_impl.dart';
 import 'data/repositories/repositorio_vehiculo_impl.dart';
 import 'data/repositories/repositorio_inventario_impl.dart';
 import 'data/repositories/repositorio_oferta_impl.dart';
 import 'data/repositories/repositorio_factura_impl.dart';
+import 'data/repositories/repositorio_proveedor_impl.dart';
+import 'data/repositories/pdf_repository_impl.dart';
 import 'data/auth_repository_impl.dart';
+import 'domain/repositories/auth_repository.dart';
 import 'domain/repositories/cliente_repository.dart';
 import 'domain/repositories/vehiculo_repository.dart';
 import 'domain/repositories/inventario_repository.dart';
 import 'domain/repositories/oferta_repository.dart';
 import 'domain/repositories/factura_repository.dart';
-import 'domain/repositories/auth_repository.dart';
-import 'data/repositories/repositorio_proveedor_impl.dart';
 import 'domain/repositories/proveedor_repository.dart';
+import 'domain/repositories/pdf_repository.dart';
+import 'domain/usecases/generar_factura_pdf.dart';
 import 'presentation/controllers/proveedor_controller.dart';
 import 'presentation/controllers/reportes_controller.dart';
 import 'presentation/controllers/facturacion_controller.dart';
 import 'presentation/controllers/auth_controller.dart';
 import 'presentation/controllers/inventario_controller.dart';
 import 'presentation/controllers/oferta_controller.dart';
+import 'presentation/controllers/pdf_controller.dart';
 
 final getIt = GetIt.instance;
 
@@ -59,6 +64,26 @@ void configurarDependencias() {
 
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(getIt<SupabaseDataSource>()),
+  );
+
+  getIt.registerLazySingleton<PdfDatasource>(
+    () => PdfDatasource(),
+  );
+
+  getIt.registerLazySingleton<PdfRepository>(
+    () => PdfRepositoryImpl(getIt<PdfDatasource>()),
+  );
+
+  getIt.registerFactory<GenerarFacturaPdf>(
+    () => GenerarFacturaPdf(getIt<PdfRepository>()),
+  );
+
+  getIt.registerFactory<PdfController>(
+    () => PdfController(
+      generarFacturaPdf: getIt<GenerarFacturaPdf>(),
+      supabaseDataSource: getIt<SupabaseDataSource>(),
+      clienteRepository: getIt<ClienteRepository>(),
+    ),
   );
 
   getIt.registerFactory<FacturacionController>(
