@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:frontend/widgets/navigation/sidebar.dart';
 import 'package:frontend/services/facturacion_api.dart';
+import 'package:web/web.dart' as web;
 
 class FacturacionScreen extends StatefulWidget {
   const FacturacionScreen({super.key});
@@ -239,8 +242,10 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     }
     
     setState(() => _cargando = false);
-    
-if (resultado != null && resultado['success'] == true) {
+
+    if (resultado != null && resultado['success'] == true) {
+      final idFactura = resultado['data']?['id'] as int?;
+      _mostrarDialogoPdf(idFactura);
       _mostrarMensaje('Factura creada exitosamente');
       await _limpiarFormulario();
     } else {
@@ -249,6 +254,55 @@ if (resultado != null && resultado['success'] == true) {
         isError: true
       );
     }
+  }
+
+  void _descargarPdfDirecto(int idFactura) {
+    final url = 'http://localhost:8080/api/facturas/$idFactura/pdf';
+    web.window.open(url, '_blank');
+  }
+
+  void _mostrarDialogoPdf(int? idFactura) {
+    if (idFactura == null) return;
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 32),
+            SizedBox(width: 12),
+            Text('Factura creada exitosamente'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Factura #$idFactura'),
+            const SizedBox(height: 16),
+            const Text('¿Desea descargar el PDF de la factura?'),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cerrar'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(context);
+              _descargarPdfDirecto(idFactura);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFE53935),
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.download),
+            label: const Text('Descargar PDF'),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Limpia el formulario después de crear una factura

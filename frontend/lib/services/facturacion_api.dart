@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:http/http.dart' as http;
 
 const String _baseUrl = 'http://localhost:8080';
@@ -142,6 +143,23 @@ class FacturacionApi {
       return data['success'] == true;
     } catch (e) {
       return false;
+    }
+  }
+
+  Future<Uint8List?> descargarPdfFactura(int idFactura) async {
+    try {
+      final url = '$_baseUrl/api/facturas/$idFactura/pdf';
+      final response = await _client.get(
+        Uri.parse(url),
+        headers: {'Accept': 'application/pdf'},
+      ).timeout(const Duration(seconds: 30));
+
+      if (response.statusCode == 200 && response.bodyBytes.isNotEmpty) {
+        return response.bodyBytes;
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }
