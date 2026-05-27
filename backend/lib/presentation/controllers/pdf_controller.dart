@@ -64,7 +64,6 @@ class PdfController {
 
     String nombreCliente = 'Consumidor Final';
     String? rtnCliente;
-    int? nrcCliente;
     String? telefonoCliente;
     String? emailCliente;
 
@@ -85,7 +84,6 @@ class PdfController {
       tipoFactura: factura.tipo_factura.valor,
       nombreCliente: nombreCliente,
       rtnCliente: rtnCliente,
-      nrcCliente: nrcCliente,
       telefonoCliente: telefonoCliente,
       emailCliente: emailCliente,
       marcaVehiculo: factura.marca_vehiculo,
