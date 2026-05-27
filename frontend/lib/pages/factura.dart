@@ -730,33 +730,43 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
           Expanded(flex: 3, child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: Icon(Icons.remove, size: 16, color: puedeReducir ? Colors.grey.shade600 : Colors.grey.shade300),
-                  onPressed: puedeReducir ? onDecrease : null,
+              if (!isServicio) ...[
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: Icon(Icons.remove, size: 16, color: puedeReducir ? Colors.grey.shade600 : Colors.grey.shade300),
+                    onPressed: puedeReducir ? onDecrease : null,
+                  ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  "$cantidad",
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    "$cantidad",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
                 ),
-              ),
-              SizedBox(
-                width: 24,
-                height: 24,
-                child: IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  icon: Icon(Icons.add, size: 16, color: puedeAumentar ? Colors.grey.shade600 : Colors.grey.shade300),
-                  onPressed: puedeAumentar ? onIncrease : null,
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    icon: Icon(Icons.add, size: 16, color: puedeAumentar ? Colors.grey.shade600 : Colors.grey.shade300),
+                    onPressed: puedeAumentar ? onIncrease : null,
+                  ),
                 ),
-              ),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  child: Text(
+                    "$cantidad",
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                  ),
+                ),
+              ],
             ],
           )),
           Expanded(flex: 4, child: Text(nombre, style: const TextStyle(fontSize: 13), overflow: TextOverflow.ellipsis)),
@@ -779,8 +789,8 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     final bool isServicio = tipo == "Servicio";
     final int stockActual = stock ?? 0;
     final int stockMin = stockMinimo ?? 0;
-    final bool sinStock = stockActual == 0;
-    final bool stockBajo = !sinStock && stockActual <= stockMin;
+    final bool sinStock = !isServicio && stockActual == 0;
+    final bool stockBajo = !isServicio && !sinStock && stockActual <= stockMin;
 
     Color? rowColor;
     if (sinStock) {
@@ -812,7 +822,7 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
                   Icon(Icons.warning, size: 14, color: Colors.orange.shade700),
                 const SizedBox(width: 4),
                 Text(
-                  stock != null ? "$stock" : "-",
+                  isServicio ? "-" : (stock != null ? "$stock" : "-"),
                   textAlign: TextAlign.right,
                   style: TextStyle(
                     fontSize: 13,

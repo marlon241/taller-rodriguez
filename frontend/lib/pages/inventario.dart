@@ -6,6 +6,7 @@ import 'package:frontend/widgets/modals/agregar_producto_modal.dart';
 import 'package:frontend/widgets/modals/entrada_stock_modal.dart';
 import 'package:frontend/widgets/modals/salida_stock_modal.dart';
 import 'package:frontend/widgets/modals/editar_producto_modal.dart';
+import 'package:frontend/widgets/modals/editar_servicio_modal.dart';
 import 'package:frontend/widgets/modals/eliminar_producto_modal.dart';
 import 'package:frontend/services/inventario_api.dart';
 import 'package:frontend/services/proveedor_api.dart';
@@ -393,32 +394,36 @@ class InventarioPageState extends State<InventarioPage> {
           separatorBuilder: (_, __) => const Divider(height: 1),
           itemBuilder: (context, index) {
             final p = _productos[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              child: Row(
-                children: [
-                  _cell(p['id']?.toString() ?? ''),
-                  _cell(p['nombre']?.toString() ?? ''),
-                  _cell(p['stock']?.toString() ?? '0'),
-                  _cell(_formatearPrecio(p['precio_compra'])),
-                  _cell(_formatearPrecio(p['precio_venta'])),
-                  _cell(_obtenerNombreProveedor(p['id_proveedor']?.toString())),
-                  _cell(p['descripcion']?.toString() ?? ''),
-                  _cell(p['clasificacion']?.toString() ?? ''),
-                  Expanded(
-                    child: Wrap(
-                      spacing: 6,
-                      children: [
-                        _accionBtn('Editar', Icons.edit, Colors.blue, () => mostrarModalEditarProducto(context, p, onSuccess: _cargarProductos)),
-                        _accionBtn('Agregar Stock', Icons.add, Colors.green, () => mostrarModalEntradaStock(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', onSuccess: _cargarProductos)),
-                        _accionBtn('Salida Stock', Icons.remove, Colors.orange, () => mostrarModalSalidaStock(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', int.tryParse(p['stock']?.toString() ?? '0') ?? 0, onSuccess: _cargarProductos)),
-                        _accionBtn('Eliminar', Icons.delete, Colors.red, () => mostrarModalEliminarProducto(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', onSuccess: _cargarProductos)),
-                      ],
+            final esProducto = p['tipo']?.toString().toLowerCase() != 'servicio';
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  children: [
+                    _cell(p['id']?.toString() ?? ''),
+                    _cell(p['nombre']?.toString() ?? ''),
+                    _cellTipo(p['tipo']?.toString() ?? ''),
+                    _cell(p['stock']?.toString() ?? '0'),
+                    _cell(_formatearPrecio(p['precio_compra'])),
+                    _cell(_formatearPrecio(p['precio_venta'])),
+                    _cell(_obtenerNombreProveedor(p['id_proveedor']?.toString())),
+                    _cell(p['descripcion']?.toString() ?? ''),
+                    _cell(p['clasificacion']?.toString() ?? ''),
+                    Expanded(
+                      child: Wrap(
+                        spacing: 6,
+                        children: [
+                          _accionBtn('Editar', Icons.edit, Colors.blue, () => esProducto
+                            ? mostrarModalEditarProducto(context, p, onSuccess: _cargarProductos)
+                            : mostrarModalEditarServicio(context, p, onSuccess: _cargarProductos)),
+                          if (esProducto) _accionBtn('Agregar Stock', Icons.add, Colors.green, () => mostrarModalEntradaStock(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', onSuccess: _cargarProductos)),
+                          if (esProducto) _accionBtn('Salida Stock', Icons.remove, Colors.orange, () => mostrarModalSalidaStock(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', int.tryParse(p['stock']?.toString() ?? '0') ?? 0, onSuccess: _cargarProductos)),
+                          _accionBtn('Eliminar', Icons.delete, Colors.red, () => mostrarModalEliminarProducto(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', onSuccess: _cargarProductos)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
+                  ],
+                ),
+              );
           },
         ),
       ],
@@ -437,6 +442,7 @@ Widget _buildTableHeader() {
         children: [
           const Expanded(child: Text('Id', style: style)),
           const Expanded(child: Text('Producto', style: style)),
+          const Expanded(child: Text('Tipo', style: style)),
           Expanded(
             child: Row(
               children: [
@@ -481,6 +487,20 @@ Widget _buildTableHeader() {
 
   Widget _cell(String text) {
     return Expanded(child: Text(text, style: const TextStyle(fontSize: 13)));
+  }
+
+  Widget _cellTipo(String tipo) {
+    final esProducto = tipo.toLowerCase() == 'producto';
+    return Expanded(
+      child: Text(
+        tipo.isEmpty ? '-' : tipo,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: esProducto ? Colors.blue : const Color(0xFFFF8C00),
+        ),
+      ),
+    );
   }
 
   Widget _buildEmptyStateMobile() {
@@ -571,13 +591,22 @@ Widget _buildTableHeader() {
                   children: [
                     const Divider(height: 1),
                     const SizedBox(height: 10),
-                    Wrap(
+                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _accionBtnMobile('Editar', Icons.edit, Colors.blue, () => mostrarModalEditarProducto(context, p, onSuccess: _cargarProductos)),
-                        _accionBtnMobile('Agregar Stock', Icons.add, Colors.green, () => mostrarModalEntradaStock(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', onSuccess: _cargarProductos)),
-                        _accionBtnMobile('Salida Stock', Icons.remove, Colors.orange, () => mostrarModalSalidaStock(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', int.tryParse(p['stock']?.toString() ?? '0') ?? 0, onSuccess: _cargarProductos)),
+                        _accionBtnMobile('Editar', Icons.edit, Colors.blue, () {
+                          final esProducto = p['tipo']?.toString().toLowerCase() != 'servicio';
+                          if (esProducto) {
+                            mostrarModalEditarProducto(context, p, onSuccess: _cargarProductos);
+                          } else {
+                            mostrarModalEditarServicio(context, p, onSuccess: _cargarProductos);
+                          }
+                        }),
+                        if (p['tipo']?.toString().toLowerCase() != 'servicio') ...[
+                          _accionBtnMobile('Agregar Stock', Icons.add, Colors.green, () => mostrarModalEntradaStock(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', onSuccess: _cargarProductos)),
+                          _accionBtnMobile('Salida Stock', Icons.remove, Colors.orange, () => mostrarModalSalidaStock(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', int.tryParse(p['stock']?.toString() ?? '0') ?? 0, onSuccess: _cargarProductos)),
+                        ],
                         _accionBtnMobile('Eliminar', Icons.delete, Colors.red, () => mostrarModalEliminarProducto(context, p['id']?.toString() ?? '', p['nombre']?.toString() ?? '', onSuccess: _cargarProductos)),
                       ],
                     ),

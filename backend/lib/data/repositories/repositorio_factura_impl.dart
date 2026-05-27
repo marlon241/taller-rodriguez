@@ -183,8 +183,8 @@ class FacturaRepositoryImpl implements FacturaRepository {
 
     final facturaInsertada = await _dataSource.insert('facturacion', facturaData);
     int? idFactura = facturaInsertada['id'] as int?;
-    
-    if (idFactura == null) {
+
+    if (idFactura == null && factura.id_cliente != null) {
       final facturasRecientes = await _dataSource.select(
         'facturacion',
         filtros: 'id_cliente=eq.${factura.id_cliente}',
@@ -216,9 +216,8 @@ class FacturaRepositoryImpl implements FacturaRepository {
     await _dataSource.insertMultiple('detalles_factura', detallesData);
 
     for (final detalle in factura.detalles) {
-      final esProducto = detalle.tipo_producto.toLowerCase() == 'producto';
-      if (esProducto) {
-        await _inventarioRepository.restarStock(detalle.id_producto, detalle.cantidad);
+      if (detalle.esProducto) {
+        await _inventarioRepository.restarStockProducto(detalle.id_producto, detalle.cantidad);
       }
     }
 

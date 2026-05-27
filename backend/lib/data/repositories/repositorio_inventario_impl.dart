@@ -162,26 +162,38 @@ class InventarioRepositoryImpl implements InventarioRepository {
   @override
   Future<bool> restarStock(String id, int cantidad) async {
     try {
-      final stockActual = await obtenerStockProducto(id);
-      final nuevoStock = stockActual - cantidad;
-      
-      if (nuevoStock < 0) {
-        return false;
-      }
-      
-      await _dataSource.update(
-        'inventario',
-        {
-          'stock': nuevoStock,
-          'ultima_actualizacion': DateTime.now().toIso8601String(),
-        },
-        'id=eq.$id',
-      );
-      _cargarInventario();
-      return true;
+      return await restarStockProducto(id, cantidad);
     } catch (e) {
       return false;
     }
+  }
+
+  Future<bool> restarStockProducto(String id, int cantidad) async {
+    final producto = await obtenerProductoPorId(id);
+    if (producto == null) return false;
+    if (!producto.esProducto) return true;
+
+    final stockActual = await obtenerStockProducto(id);
+    final nuevoStock = stockActual - cantidad;
+
+    if (nuevoStock < 0) {
+      return false;
+    }
+
+    await _dataSource.update(
+      'inventario',
+      {
+        'stock': nuevoStock,
+        'ultima_actualizacion': DateTime.now().toIso8601String(),
+      },
+      'id=eq.$id',
+    );
+    _cargarInventario();
+    return true;
+  }
+
+  Future<bool> restarStockServicio(String id, int cantidad) async {
+    return true;
   }
 
   @override
