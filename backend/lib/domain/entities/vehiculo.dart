@@ -1,6 +1,5 @@
 import 'package:equatable/equatable.dart';
 
-/// Entidad que representa un Vehículo del taller
 class Vehiculo extends Equatable {
   final int? id;
   final String modelo;
@@ -13,6 +12,8 @@ class Vehiculo extends Equatable {
   final DateTime? fecha_salida;
   final int? id_cliente;
   final int? id_empleado;
+  final String? urlImagenVehiculo;
+  final String? urlTarjetaCirculacion;
 
   const Vehiculo({
     this.id,
@@ -26,6 +27,8 @@ class Vehiculo extends Equatable {
     this.fecha_salida,
     this.id_cliente,
     this.id_empleado,
+    this.urlImagenVehiculo,
+    this.urlTarjetaCirculacion,
   });
 
   factory Vehiculo.fromJson(Map<String, dynamic> json) {
@@ -36,15 +39,17 @@ class Vehiculo extends Equatable {
       placa: json['placa'] as String? ?? '',
       anio: json['anio'] as int? ?? 0,
       diagnostico: json['diagnostico'] as String? ?? '',
-      estado: json['estado'] as String? ?? 'En reparación',
-      fecha_ingreso: json['fecha_ingreso'] != null 
-          ? DateTime.tryParse(json['fecha_ingreso'].toString()) 
+      estado: json['estado'] as String? ?? 'En revisión',
+      fecha_ingreso: json['fecha_ingreso'] != null
+          ? DateTime.tryParse(json['fecha_ingreso'].toString())
           : null,
-      fecha_salida: json['fecha_salida'] != null 
-          ? DateTime.tryParse(json['fecha_salida'].toString()) 
+      fecha_salida: json['fecha_salida'] != null
+          ? DateTime.tryParse(json['fecha_salida'].toString())
           : null,
       id_cliente: json['id_cliente'] as int?,
       id_empleado: json['id_empleado'] as int?,
+      urlImagenVehiculo: json['url_imagen_vehiculo'] as String?,
+      urlTarjetaCirculacion: json['url_tarjeta_circulacion'] as String?,
     );
   }
 
@@ -61,11 +66,17 @@ class Vehiculo extends Equatable {
       'fecha_salida': fecha_salida?.toIso8601String(),
       'id_cliente': id_cliente,
       'id_empleado': id_empleado,
+      if (urlImagenVehiculo != null) 'url_imagen_vehiculo': urlImagenVehiculo,
+      if (urlTarjetaCirculacion != null) 'url_tarjeta_circulacion': urlTarjetaCirculacion,
     };
   }
 
   String get nombreCompleto => '$marca $modelo ($placa)';
 
   @override
-  List<Object?> get props => [id, modelo, marca, placa, anio, diagnostico, estado, fecha_ingreso, fecha_salida, id_cliente, id_empleado];
+  List<Object?> get props => [
+    id, modelo, marca, placa, anio, diagnostico, estado,
+    fecha_ingreso, fecha_salida, id_cliente, id_empleado,
+    urlImagenVehiculo, urlTarjetaCirculacion,
+  ];
 }

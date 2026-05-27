@@ -21,6 +21,7 @@ import 'presentation/controllers/facturacion_controller.dart';
 import 'presentation/controllers/auth_controller.dart';
 import 'presentation/controllers/inventario_controller.dart';
 import 'presentation/controllers/oferta_controller.dart';
+import 'presentation/controllers/vehiculo_controller.dart';
 
 final getIt = GetIt.instance;
 
@@ -100,6 +101,12 @@ void configurarDependencias() {
   getIt.registerFactory<OfertaController>(
     () => OfertaController(
       repository: getIt<OfertaRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<VehiculoController>(
+    () => VehiculoController(
+      vehiculoRepository: getIt<VehiculoRepository>(),
     ),
   );
 }

@@ -46,9 +46,7 @@ class VehiculoController {
   Future<String> obtenerVehiculoPorId(int id) async {
     try {
       final vehiculo = await _vehiculoRepository.obtenerVehiculoPorId(id);
-      if (vehiculo == null) {
-        return _respuestaError('Vehículo no encontrado');
-      }
+      if (vehiculo == null) return _respuestaError('Vehículo no encontrado');
       return _respuestaExitosa({
         'id': vehiculo.id,
         'modelo': vehiculo.modelo,
@@ -82,13 +80,9 @@ class VehiculoController {
         placa: body['placa'] as String,
         anio: (body['anio'] as num).toInt(),
         diagnostico: body['diagnostico'] as String? ?? '',
-        estado: body['estado'] as String? ?? 'Pendiente',
-        fecha_ingreso: body['fecha_ingreso'] != null
-            ? DateTime.tryParse(body['fecha_ingreso'])
-            : DateTime.now(),
-        fecha_salida: body['fecha_salida'] != null
-            ? DateTime.tryParse(body['fecha_salida'])
-            : null,
+        estado: body['estado'] as String? ?? 'En revisión',
+        fecha_ingreso: body['fecha_ingreso'] != null ? DateTime.tryParse(body['fecha_ingreso']) : DateTime.now(),
+        fecha_salida: body['fecha_salida'] != null ? DateTime.tryParse(body['fecha_salida']) : null,
         id_cliente: body['id_cliente'] as int?,
         id_empleado: body['id_empleado'] as int?,
         urlImagenVehiculo: body['url_imagen_vehiculo'] as String?,
@@ -96,10 +90,7 @@ class VehiculoController {
       );
 
       final creado = await _vehiculoRepository.crearVehiculo(vehiculo);
-      return _respuestaExitosa({
-        'id': creado.id,
-        'mensaje': 'Vehículo creado exitosamente',
-      });
+      return _respuestaExitosa({'id': creado.id, 'mensaje': 'Vehículo creado exitosamente'});
     } catch (e) {
       return _respuestaError('Error al crear vehículo: $e');
     }
@@ -108,9 +99,7 @@ class VehiculoController {
   Future<String> actualizarVehiculo(int id, Map<String, dynamic> body) async {
     try {
       final vehiculoExistente = await _vehiculoRepository.obtenerVehiculoPorId(id);
-      if (vehiculoExistente == null) {
-        return _respuestaError('Vehículo no encontrado');
-      }
+      if (vehiculoExistente == null) return _respuestaError('Vehículo no encontrado');
 
       final vehiculoActualizado = Vehiculo(
         id: id,
@@ -120,12 +109,8 @@ class VehiculoController {
         anio: (body['anio'] as num?)?.toInt() ?? vehiculoExistente.anio,
         diagnostico: body['diagnostico'] as String? ?? vehiculoExistente.diagnostico,
         estado: body['estado'] as String? ?? vehiculoExistente.estado,
-        fecha_ingreso: body['fecha_ingreso'] != null
-            ? DateTime.tryParse(body['fecha_ingreso'])
-            : vehiculoExistente.fecha_ingreso,
-        fecha_salida: body['fecha_salida'] != null
-            ? DateTime.tryParse(body['fecha_salida'])
-            : vehiculoExistente.fecha_salida,
+        fecha_ingreso: body['fecha_ingreso'] != null ? DateTime.tryParse(body['fecha_ingreso']) : vehiculoExistente.fecha_ingreso,
+        fecha_salida: body['fecha_salida'] != null ? DateTime.tryParse(body['fecha_salida']) : vehiculoExistente.fecha_salida,
         id_cliente: body['id_cliente'] as int? ?? vehiculoExistente.id_cliente,
         id_empleado: body['id_empleado'] as int? ?? vehiculoExistente.id_empleado,
         urlImagenVehiculo: body['url_imagen_vehiculo'] as String? ?? vehiculoExistente.urlImagenVehiculo,
@@ -142,42 +127,13 @@ class VehiculoController {
   Future<String> eliminarVehiculo(int id) async {
     try {
       final resultado = await _vehiculoRepository.eliminarVehiculo(id);
-      if (resultado) {
-        return _respuestaExitosa({'mensaje': 'Vehículo eliminado exitosamente'});
-      }
+      if (resultado) return _respuestaExitosa({'mensaje': 'Vehículo eliminado exitosamente'});
       return _respuestaError('No se pudo eliminar el vehículo');
     } catch (e) {
       return _respuestaError('Error al eliminar vehículo: $e');
     }
   }
 
-  Future<String> buscarVehiculos(String query) async {
-    try {
-      final stream = _vehiculoRepository.buscarVehiculos(query);
-      final vehiculos = await stream.first;
-      return _respuestaExitosa(
-        vehiculos.map((v) => {
-          'id': v.id,
-          'modelo': v.modelo,
-          'marca': v.marca,
-          'placa': v.placa,
-          'estado': v.estado,
-          'fecha_ingreso': v.fecha_ingreso?.toIso8601String(),
-          'id_cliente': v.id_cliente,
-          'url_imagen_vehiculo': v.urlImagenVehiculo,
-          'url_tarjeta_circulacion': v.urlTarjetaCirculacion,
-        }).toList(),
-      );
-    } catch (e) {
-      return _respuestaError('Error al buscar vehículos: $e');
-    }
-  }
-
-  String _respuestaExitosa(dynamic data) {
-    return json.encode({'success': true, 'data': data});
-  }
-
-  String _respuestaError(String mensaje) {
-    return json.encode({'success': false, 'message': mensaje});
-  }
+  String _respuestaExitosa(dynamic data) => json.encode({'success': true, 'data': data});
+  String _respuestaError(String mensaje) => json.encode({'success': false, 'message': mensaje});
 }
