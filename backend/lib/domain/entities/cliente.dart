@@ -11,6 +11,8 @@ class Cliente extends Equatable {
   final String frecuencia_visita;
   final bool estado;
   final DateTime? fecha_registro;
+  final int? nit;
+  final int? nrc;
 
   const Cliente({
     this.id,
@@ -23,6 +25,8 @@ class Cliente extends Equatable {
     required this.frecuencia_visita,
     required this.estado,
     this.fecha_registro,
+    this.nit,
+    this.nrc,
   });
 
   factory Cliente.fromJson(Map<String, dynamic> json) {
@@ -39,6 +43,8 @@ class Cliente extends Equatable {
       fecha_registro: json['fecha_registro'] != null 
           ? DateTime.tryParse(json['fecha_registro'].toString()) 
           : null,
+      nit: json['nit'] as int?,
+      nrc: json['nrc'] as int?,
     );
   }
 
@@ -54,9 +60,11 @@ class Cliente extends Equatable {
       'frecuencia_visita': frecuencia_visita,
       'estado': estado,
       'fecha_registro': fecha_registro?.toIso8601String(),
+      if (nit != null) 'nit': nit,
+      if (nrc != null) 'nrc': nrc,
     };
   }
 
   @override
-  List<Object?> get props => [id, nombre, telefono, dui, rtn, correo, direccion, frecuencia_visita, estado, fecha_registro];
+  List<Object?> get props => [id, nombre, telefono, dui, rtn, correo, direccion, frecuencia_visita, estado, fecha_registro, nit, nrc];
 }

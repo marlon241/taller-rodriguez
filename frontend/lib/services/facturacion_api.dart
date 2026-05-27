@@ -22,7 +22,7 @@ class FacturacionApi {
     }
   }
   
-  Future<List<Map<String, dynamic>>> obtenerVehiculosPorCliente(int clienteId) async {
+  Future<List<Map<String, dynamic>>> obtenerVehiculosPorCliente(int? clienteId) async {
     try {
       final response = await _client.get(
         Uri.parse('$_baseUrl/api/vehiculos?clienteId=$clienteId'),
@@ -86,7 +86,7 @@ class FacturacionApi {
   }
   
   Future<Map<String, dynamic>> crearFactura({
-    required int idCliente,
+    int? idCliente,
     int? idVehiculo,
     required String tipoFactura,
     required List<Map<String, dynamic>> items,

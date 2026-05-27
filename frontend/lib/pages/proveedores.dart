@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frontend/widgets/navigation/sidebar.dart';
 import 'package:frontend/services/proveedor_api.dart';
+import 'package:frontend/utils/validadores.dart';
 
 class ProveedoresScreen extends StatefulWidget {
   const ProveedoresScreen({super.key});
@@ -55,6 +57,34 @@ class _ProveedoresScreenState extends State<ProveedoresScreen> {
         const SnackBar(content: Text('Por favor complete los campos obligatorios')),
       );
       return;
+    }
+
+    final errorTelefono = validarTelefono(_telefonoController.text);
+    if (errorTelefono != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorTelefono), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (_correoController.text.isNotEmpty) {
+      final errorCorreo = validarCorreo(_correoController.text);
+      if (errorCorreo != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorCorreo), backgroundColor: Colors.red),
+        );
+        return;
+      }
+    }
+
+    if (_locacionSeleccionada == 'Nacional' && _nitController.text.isNotEmpty) {
+      final errorNIT = validarNIT(_nitController.text);
+      if (errorNIT != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(errorNIT), backgroundColor: Colors.red),
+        );
+        return;
+      }
     }
 
     final data = {

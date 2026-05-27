@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/services/inventario_api.dart';
 import 'package:frontend/services/proveedor_api.dart';
+import 'package:frontend/utils/validadores.dart';
 
 void mostrarModalEditarProducto(BuildContext context, Map<String, dynamic> producto, {VoidCallback? onSuccess}) {
   final nombreController = TextEditingController(text: producto['nombre']?.toString() ?? '');
@@ -89,9 +90,9 @@ void mostrarModalEditarProducto(BuildContext context, Map<String, dynamic> produ
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(child: _modalTextField('Precio de compra:', precioCompraController, prefix: '\$')),
+                        Expanded(child: _modalTextField('Precio de compra:', precioCompraController, prefix: '\$', keyboardType: TextInputType.number, formatters: [ValidadorPrecio()])),
                         const SizedBox(width: 16),
-                        Expanded(child: _modalTextField('Precio de venta:', precioVentaController, prefix: '\$')),
+                        Expanded(child: _modalTextField('Precio de venta:', precioVentaController, prefix: '\$', keyboardType: TextInputType.number, formatters: [ValidadorPrecio()])),
                       ],
                     ),
                     const SizedBox(height: 16),
@@ -113,13 +114,14 @@ void mostrarModalEditarProducto(BuildContext context, Map<String, dynamic> produ
                     const SizedBox(height: 16),
                     Row(
                       children: [
-                        Expanded(child: _modalTextField('Stock mínimo:', stockMinimoController, keyboardType: TextInputType.number)),
+                        Expanded(child: _modalTextField('Stock mínimo:', stockMinimoController, keyboardType: TextInputType.number, formatters: [FilteringTextInputFormatter.digitsOnly])),
                         const SizedBox(width: 16),
                         Expanded(
                           child: _modalTextField(
                             'Stock máximo:',
                             stockMaximoController,
                             keyboardType: TextInputType.number,
+                            formatters: [FilteringTextInputFormatter.digitsOnly],
                             onChanged: (value) {
                               final stock = int.tryParse(value) ?? 0;
                               if (stock > 999) {
@@ -200,7 +202,7 @@ void mostrarModalEditarProducto(BuildContext context, Map<String, dynamic> produ
 }
 
 Widget _modalTextField(String label, TextEditingController controller,
-    {int maxLines = 1, String? prefix, TextInputType? keyboardType, Function(String)? onChanged}) {
+    {int maxLines = 1, String? prefix, TextInputType? keyboardType, Function(String)? onChanged, List<TextInputFormatter>? formatters}) {
   return Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
@@ -210,10 +212,7 @@ Widget _modalTextField(String label, TextEditingController controller,
         controller: controller,
         maxLines: maxLines,
         keyboardType: keyboardType,
-        inputFormatters: [
-          FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(3),
-        ],
+        inputFormatters: formatters ?? [],
         onChanged: onChanged,
         decoration: InputDecoration(
           prefixText: prefix,

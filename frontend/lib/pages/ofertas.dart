@@ -318,6 +318,13 @@ class _OfertasScreenState extends State<OfertasScreen> {
                           controller: _descuentoController,
                           keyboardType: TextInputType.number,
                           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                          onChanged: (value) {
+                            final descuento = int.tryParse(value) ?? 0;
+                            if (descuento > 100) {
+                              _descuentoController.text = '100';
+                              _descuentoController.selection = TextSelection.fromPosition(TextPosition(offset: _descuentoController.text.length));
+                            }
+                          },
                           decoration: InputDecoration(
                             labelText: '% de descuento',
                             suffixText: '%',
@@ -329,6 +336,8 @@ class _OfertasScreenState extends State<OfertasScreen> {
                       Expanded(
                         child: TextField(
                           controller: _productoController,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                           decoration: InputDecoration(
                             labelText: 'ID Producto (opcional)',
                             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),

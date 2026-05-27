@@ -90,12 +90,19 @@ class InventarioController {
     try {
       final stock = (data['stock'] as num?)?.toInt() ?? 0;
       final stockMaximo = (data['stock_maximo'] as num?)?.toInt() ?? 0;
+      final stockMinimo = (data['stock_minimo'] as num?)?.toInt() ?? 0;
       
       if (stock > 999) {
         return _respuestaError('El stock no puede exceder 999 unidades');
       }
       if (stockMaximo > 999) {
         return _respuestaError('El stock máximo no puede exceder 999 unidades');
+      }
+      if (stockMinimo < 0) {
+        return _respuestaError('El stock mínimo no puede ser negativo');
+      }
+      if (stockMinimo > stockMaximo) {
+        return _respuestaError('El stock mínimo no puede ser mayor al stock máximo');
       }
       
       final producto = Producto(
@@ -135,12 +142,19 @@ class InventarioController {
       
       final stock = (data['stock'] as num?)?.toInt() ?? productoExistente.stock;
       final stockMaximo = (data['stock_maximo'] as num?)?.toInt() ?? productoExistente.stock_maximo;
+      final stockMinimo = (data['stock_minimo'] as num?)?.toInt() ?? productoExistente.stock_minimo;
       
       if (stock > 999) {
         return _respuestaError('El stock no puede exceder 999 unidades');
       }
       if (stockMaximo > 999) {
-        return _respuestaError('El stock máximo no puede exceder 999 unidades');
+        return _respuestaError('El stock maximo no puede exceder 999 unidades');
+      }
+      if (stockMinimo < 0) {
+        return _respuestaError('El stock minimo no puede ser negativo');
+      }
+      if (stockMinimo > stockMaximo) {
+        return _respuestaError('El stock minimo no puede ser mayor al stock maximo');
       }
       
       final producto = Producto(

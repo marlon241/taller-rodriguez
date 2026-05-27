@@ -51,6 +51,19 @@ class OfertaController {
 
   Future<String> crearOferta(Map<String, dynamic> data) async {
     try {
+      final porcentaje = (data['porcentaje_descuento'] as num?)?.toDouble() ?? 0;
+      if (porcentaje <= 0 || porcentaje > 100) {
+        return _respuestaError('El descuento debe ser entre 1 y 100');
+      }
+
+      final idProd = data['id_producto_firebase'] as String?;
+      if (idProd != null && idProd.isNotEmpty) {
+        final chars = idProd.replaceAll(RegExp(r'[^0-9]'), '');
+        if (chars != idProd) {
+          return _respuestaError('El ID del producto debe contener solo numeros');
+        }
+      }
+
       final ahora = DateTime.now();
       final fechaInicio = data['fecha_inicio'] != null 
           ? DateTime.parse(data['fecha_inicio'].toString())
@@ -91,6 +104,19 @@ class OfertaController {
       final ofertaExistente = await _repository.obtenerOfertaPorId(id);
       if (ofertaExistente == null) {
         return _respuestaError('Oferta no encontrada');
+      }
+
+      final porcentaje = (data['porcentaje_descuento'] as num?)?.toDouble() ?? ofertaExistente.porcentaje_descuento;
+      if (porcentaje <= 0 || porcentaje > 100) {
+        return _respuestaError('El descuento debe ser entre 1 y 100');
+      }
+
+      final idProd = data['id_producto_firebase'] as String? ?? ofertaExistente.id_producto_firebase;
+      if (idProd != null && idProd.isNotEmpty) {
+        final chars = idProd.replaceAll(RegExp(r'[^0-9]'), '');
+        if (chars != idProd) {
+          return _respuestaError('El ID del producto debe contener solo numeros');
+        }
       }
 
       final ahora = DateTime.now();
