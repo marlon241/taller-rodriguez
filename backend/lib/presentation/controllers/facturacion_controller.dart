@@ -43,6 +43,8 @@ class FacturacionController {
           'telefono': c.telefono,
           'dui': c.dui,
           'correo': c.correo,
+          'nit': c.nit,
+          'nrc': c.nrc,
         }).toList(),
       );
     } catch (e) {
@@ -78,7 +80,7 @@ class FacturacionController {
         }).toList(),
       );
     } catch (e) {
-      return _respuestaError('Error al obtener vehículos: $e');
+      return _respuestaError('Error al obtener vehiculos: $e');
     }
   }
   
@@ -215,16 +217,26 @@ class FacturacionController {
   
   Future<String> crearFactura(Map<String, dynamic> body) async {
     try {
-      if (body['id_cliente'] == null) {
-        return _respuestaError('El cliente es requerido');
+      final tipoFacturaStr = body['tipo_factura'] as String? ?? 'Consumidor Final';
+      final tipoFactura = TipoFacturaExtension.fromString(tipoFacturaStr);
+
+      if (tipoFactura == TipoFactura.creditoFiscal) {
+        if (body['id_cliente'] == null) {
+          return _respuestaError('Para Credito Fiscal, el cliente es requerido');
+        }
+
+        final cliente = await _clienteRepository.obtenerClientePorId(body['id_cliente'] as int);
+        if (cliente == null) {
+          return _respuestaError('Cliente no encontrado');
+        }
+        if (cliente.nit == null) {
+          return _respuestaError('El cliente debe tener NIT registrado para emitir Credito Fiscal');
+        }
       }
 
       if (body['items'] == null || (body['items'] as List).isEmpty) {
-        return _respuestaError('Debe incluir al menos un ítem en la factura');
+        return _respuestaError('Debe incluir al menos un item en la factura');
       }
-
-      final tipoFacturaStr = body['tipo_factura'] as String? ?? 'Consumidor Final';
-      final tipoFactura = TipoFacturaExtension.fromString(tipoFacturaStr);
 
       final descuentoPorcentaje = (body['descuento_porcentaje'] as num?)?.toDouble() ?? 0.0;
 

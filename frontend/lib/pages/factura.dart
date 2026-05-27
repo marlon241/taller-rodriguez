@@ -11,33 +11,26 @@ class FacturacionScreen extends StatefulWidget {
 }
 
 class _FacturacionScreenState extends State<FacturacionScreen> {
-  // Instancia del servicio API
   final FacturacionApi _api = FacturacionApi();
   
-  // Estado de carga
   bool _cargando = false;
   
-  // Listas de datos del backend
   List<Map<String, dynamic>> _clientes = [];
   List<Map<String, dynamic>> _vehiculos = [];
   List<Map<String, dynamic>> _ofertas = [];
   List<Map<String, dynamic>> _inventario = [];
   
-  // Items de la factura actual
   List<Map<String, dynamic>> _itemsFactura = [];
   
-  // Valores seleccionados
   int? _clienteSeleccionado;
   int? _vehiculoSeleccionado;
-  String _tipoFactura = 'Credito Fiscal';
+  String _tipoFactura = 'Consumidor Final';
   int? _ofertaSeleccionada;
   double _descuentoPorcentaje = 0;
-  
-  // Text controllers
+
   final TextEditingController _busquedaController = TextEditingController();
   final TextEditingController _descuentoController = TextEditingController();
   
-  // Totales
   double _subtotal = 0;
   double _iva = 0;
   double _descuento = 0;
@@ -56,12 +49,28 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     super.dispose();
   }
 
-  /// Carga todos los datos iniciales al abrir la pantalla
+  int? get _clienteNit {
+    if (_clienteSeleccionado == null) return null;
+    final cliente = _clientes.where((c) => c['id'] == _clienteSeleccionado).firstOrNull;
+    return cliente?['nit'] as int?;
+  }
+
+  bool get _clienteTieneNit {
+    final nit = _clienteNit;
+    return nit != null;
+  }
+
+  String? get _validacionCreditoFiscal {
+    if (_tipoFactura != 'Credito Fiscal') return null;
+    if (_clienteSeleccionado == null) return 'Para Credito Fiscal, el cliente es requerido';
+    if (!_clienteTieneNit) return 'El cliente seleccionado no tiene NIT registrado. Agregue el NIT en la seccion de Clientes para emitir Credito Fiscal.';
+    return null;
+  }
+
   Future<void> _cargarDatosIniciales() async {
     setState(() => _cargando = true);
     
     try {
-      // Cargar clientes, ofertas e inventario en paralelo
       final resultados = await Future.wait([
         _api.obtenerClientes(),
         _api.obtenerOfertas(),
@@ -84,7 +93,6 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     }
   }
 
-  /// Carga los vehículos cuando se selecciona un cliente
   Future<void> _onClienteChanged(int? clienteId) async {
     setState(() {
       _clienteSeleccionado = clienteId;
@@ -98,7 +106,6 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     }
   }
 
-  /// Busca productos en el inventario
   Future<void> _buscarInventario(String query) async {
     if (query.isEmpty) {
       final inventario = await _api.obtenerInventario();
@@ -109,14 +116,12 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     }
   }
 
-  /// Agrega un producto/servicio a la factura
   void _agregarItem(Map<String, dynamic> producto) {
     final tipoProducto = producto['tipo'] as String;
     final esProducto = tipoProducto.toLowerCase() != 'servicio';
 
     if (esProducto) {
       final stockDisponible = producto['stock'] as int? ?? 0;
-      final stockMinimo = producto['stock_minimo'] as int? ?? 0;
 
       final indexExistente = _itemsFactura.indexWhere(
         (item) => item['id_producto'] == producto['id']
@@ -129,7 +134,7 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
 
       if (cantidadEnFactura >= stockDisponible) {
         _mostrarMensaje(
-          'No hay más stock disponible para ${producto['nombre']}. Stock: $stockDisponible',
+          'No hay mas stock disponible para ${producto['nombre']}. Stock: $stockDisponible',
           isError: true,
         );
         return;
@@ -158,29 +163,22 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     });
   }
 
-  /// Calcula los subtotales, IVA y total
   void _calcularTotales() {
-    // Calcular subtotal
     _subtotal = _itemsFactura.fold(0.0, (sum, item) {
       final cantidad = item['cantidad'] as int;
       final precio = (item['precio_unitario'] as num).toDouble();
       return sum + (cantidad * precio);
     });
     
-    // Calcular descuento
     _descuento = _subtotal * (_descuentoPorcentaje / 100);
     
-    // Calcular subtotal con descuento
     final subtotalConDescuento = _subtotal - _descuento;
     
-    // Calcular IVA (13%)
     _iva = subtotalConDescuento * 0.13;
     
-    // Calcular total
     _total = subtotalConDescuento + _iva;
   }
 
-  /// Actualiza el descuento y recalcula totales
   void _actualizarDescuento(double porcentaje) {
     setState(() {
       _descuentoPorcentaje = porcentaje;
@@ -188,13 +186,12 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     });
   }
 
-  /// Procesa y crea la factura en el backend
   Future<void> _procesarFactura() async {
-    // Prevenir doble click
     if (_cargando) return;
     
-    if (_clienteSeleccionado == null) {
-      _mostrarMensaje('Debe seleccionar un cliente', isError: true);
+    final validacion = _validacionCreditoFiscal;
+    if (validacion != null) {
+      _mostrarMensaje(validacion, isError: true);
       return;
     }
     
@@ -205,14 +202,13 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     
     setState(() => _cargando = true);
     
-    // Intentar hasta 3 veces en caso de error de red
     Map<String, dynamic>? resultado;
     String? errorMsg;
     
     for (int intento = 1; intento <= 3; intento++) {
       try {
         resultado = await _api.crearFactura(
-          idCliente: _clienteSeleccionado!,
+          idCliente: _clienteSeleccionado,
           idVehiculo: _vehiculoSeleccionado,
           tipoFactura: _tipoFactura,
           items: _itemsFactura,
@@ -220,19 +216,16 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
           idOferta: _ofertaSeleccionada,
         );
         
-        // Si成功了 (éxito), salir del loop
         if (resultado['success'] == true) {
           break;
         }
         
-        // Si hubo error en el resultado, guardarlo
         errorMsg = resultado['message']?.toString() ?? 'Error desconocido';
         
       } catch (e) {
-        errorMsg = 'Error de conexión: $e';
+        errorMsg = 'Error de conexion: $e';
       }
       
-      // Si no es el último intento, esperar antes de reintentar
       if (intento < 3) {
         await Future.delayed(Duration(milliseconds: 500 * intento));
       }
@@ -240,7 +233,7 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     
     setState(() => _cargando = false);
     
-if (resultado != null && resultado['success'] == true) {
+    if (resultado != null && resultado['success'] == true) {
       _mostrarMensaje('Factura creada exitosamente');
       await _limpiarFormulario();
       final warnings = resultado['warnings_stock'] as List?;
@@ -261,7 +254,6 @@ if (resultado != null && resultado['success'] == true) {
     }
   }
 
-  /// Limpia el formulario después de crear una factura
   Future<void> _limpiarFormulario() async {
     setState(() {
       _itemsFactura = [];
@@ -277,7 +269,6 @@ if (resultado != null && resultado['success'] == true) {
     setState(() {
       _inventario = inventario;
     });
-    // Limpiar campos de texto
     _descuentoController.clear();
     _busquedaController.clear();
   }
@@ -299,7 +290,7 @@ if (resultado != null && resultado['success'] == true) {
 
     return Scaffold(
       drawer: !isWide ? const SidebarDrawerContent() : null,
-      appBar: !isWide ? AppBar(title: const Text('Facturación')) : null,
+      appBar: !isWide ? AppBar(title: const Text('Facturacion')) : null,
       backgroundColor: const Color(0xFFF8F9FA),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
@@ -314,7 +305,7 @@ if (resultado != null && resultado['success'] == true) {
                       children: [
                         if (isWide)
                           const Text(
-                            "Facturación",
+                            "Facturacion",
                             style: TextStyle(fontSize: 42, fontWeight: FontWeight.bold, fontFamily: 'Itim'),
                           ),
                         const SizedBox(height: 20),
@@ -352,39 +343,54 @@ if (resultado != null && resultado['success'] == true) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-// Dropdown Cliente
-        _buildDropdown<int>(
+        _buildDropdown<int?>(
           label: "Cliente",
           hint: "Seleccionar cliente",
-          items: _clientes.map((c) => DropdownMenuItem<int>(
-            value: c['id'] as int,
-            child: Text(c['nombre']?.toString() ?? '', overflow: TextOverflow.ellipsis),
-          )).toList(),
+          items: [
+            const DropdownMenuItem<int?>(value: null, child: Text('Ninguno')),
+            ..._clientes.map((c) => DropdownMenuItem<int?>(
+              value: c['id'] as int,
+              child: Text(c['nombre']?.toString() ?? '', overflow: TextOverflow.ellipsis),
+            )),
+          ],
           value: _clienteSeleccionado,
           onChanged: (value) => _onClienteChanged(value),
         ),
         
+        if (_tipoFactura == 'Credito Fiscal' && _clienteSeleccionado != null && !_clienteTieneNit)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber, color: Colors.orange.shade700, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Este cliente no tiene NIT. No podra emitir Credito Fiscal.',
+                    style: TextStyle(fontSize: 12, color: Colors.orange.shade700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        
         const SizedBox(height: 14),
         
-        // Dropdown Vehículo
-        _buildDropdown<int>(
-          label: "Vehículo",
-          hint: "Seleccionar vehículo",
-          items: _vehiculos.map((v) => DropdownMenuItem<int>(
+        _buildDropdown<int?>(
+          label: "Vehiculo",
+          hint: "Seleccionar vehiculo",
+          items: _vehiculos.map((v) => DropdownMenuItem<int?>(
             value: v['id'] as int,
             child: Text('${v['marca']} ${v['modelo']} (${v['placa']})', overflow: TextOverflow.ellipsis),
           )).toList(),
           value: _vehiculoSeleccionado,
           onChanged: (value) {
-            if (_vehiculos.isNotEmpty) {
-              setState(() => _vehiculoSeleccionado = value);
-            }
+            setState(() => _vehiculoSeleccionado = value);
           },
         ),
         
         const SizedBox(height: 14),
         
-        // Dropdown Tipo de factura
         _buildDropdown<String>(
           label: "Tipo de factura",
           hint: "Consumidor Final",
@@ -393,18 +399,36 @@ if (resultado != null && resultado['success'] == true) {
             DropdownMenuItem<String>(value: 'Credito Fiscal', child: Text('Credito Fiscal')),
           ],
           value: _tipoFactura,
-          onChanged: (value) => setState(() => _tipoFactura = value ?? 'Consumidor Final'),
+          onChanged: (value) {
+            setState(() => _tipoFactura = value ?? 'Consumidor Final');
+          },
         ),
+        
+        if (_tipoFactura == 'Credito Fiscal')
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Row(
+              children: [
+                Icon(Icons.info_outline, color: Colors.blue.shade700, size: 16),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'Credito Fiscal requiere cliente con NIT registrado',
+                    style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
+                  ),
+                ),
+              ],
+            ),
+          ),
         
         const SizedBox(height: 14),
         
-        // Dropdown Ofertas
-        _buildDropdown<int>(
+        _buildDropdown<int?>(
           label: "Aplicar oferta",
           hint: "Ninguna",
           items: [
-            const DropdownMenuItem<int>(value: null, child: Text('Ninguna')),
-            ..._ofertas.map((o) => DropdownMenuItem<int>(
+            const DropdownMenuItem<int?>(value: null, child: Text('Ninguna')),
+            ..._ofertas.map((o) => DropdownMenuItem<int?>(
               value: o['id'] as int,
               child: Text('${o['nombre_oferta']} (${o['porcentaje_descuento']}% desc.)'),
             )),
@@ -424,7 +448,6 @@ if (resultado != null && resultado['success'] == true) {
         
         const SizedBox(height: 14),
         
-        // Campo de descuento
         const Text(
           "Porcentaje de descuento",
           style: TextStyle(fontWeight: FontWeight.w500, fontFamily: 'Itim'),
@@ -462,7 +485,6 @@ if (resultado != null && resultado['success'] == true) {
           ),
           child: Column(
             children: [
-              // Header rojo
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 decoration: const BoxDecoration(
@@ -484,7 +506,6 @@ if (resultado != null && resultado['success'] == true) {
                 ),
               ),
 
-              // Lista de items de la factura
               SizedBox(
                 height: 260,
                 child: _itemsFactura.isEmpty
@@ -518,7 +539,6 @@ if (resultado != null && resultado['success'] == true) {
 
               const Divider(height: 1),
 
-              // Totales
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 child: Column(
@@ -538,7 +558,6 @@ if (resultado != null && resultado['success'] == true) {
         ),
         const SizedBox(height: 16),
         
-        // Botón procesar factura
         SizedBox(
           width: double.infinity,
           height: 52,
@@ -563,13 +582,12 @@ if (resultado != null && resultado['success'] == true) {
       padding: const EdgeInsets.only(left: 12, right: 12),
       child: Column(
         children: [
-          // Buscador
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
             child: TextField(
@@ -587,19 +605,17 @@ if (resultado != null && resultado['success'] == true) {
           ),
           const SizedBox(height: 12),
 
-          // Tabla de productos
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
               border: Border.all(color: Colors.grey.shade200),
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 4)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
             child: Column(
               children: [
-                // Header
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                   decoration: BoxDecoration(
@@ -620,7 +636,6 @@ if (resultado != null && resultado['success'] == true) {
                   ),
                 ),
 
-                // Lista de productos
                 SizedBox(
                   height: 160,
                   child: _inventario.isEmpty
@@ -831,7 +846,7 @@ if (resultado != null && resultado['success'] == true) {
 
       if (cantidadActual >= stockDisponible) {
         _mostrarMensaje(
-          'No hay más stock disponible para ${item['nombre']}. Stock: $stockDisponible',
+          'No hay mas stock disponible para ${item['nombre']}. Stock: $stockDisponible',
           isError: true,
         );
         return;
