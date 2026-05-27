@@ -549,29 +549,7 @@ class _PerfilPageState extends State<PerfilPage> with SingleTickerProviderStateM
                         ),
                         const SizedBox(height: 36),
 
-                        // Botón cerrar sesión
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.pushNamedAndRemoveUntil(
-                                context,
-                                '/login',
-                                (route) => false,
-                              );
-                            },
-                            icon: const Icon(Icons.logout, color: Colors.white),
-                            label: const Text(
-                              'Cerrar sesión',
-                              style: TextStyle(color: Colors.white, fontFamily: 'Itim'),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                            ),
-                          ),
-                        ),
+                      
                       ],
                     ),
                   ),
