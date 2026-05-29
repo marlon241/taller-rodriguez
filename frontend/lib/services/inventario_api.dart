@@ -90,37 +90,61 @@ class InventarioApi {
   
   Future<Map<String, dynamic>> entradaStock(String id, int cantidad, {String? motivo}) async {
     try {
-      final response = await _client.patch(
-        Uri.parse('$_baseUrl/api/inventario/$id/stock'),
+      final uri = Uri.parse('$_baseUrl/api/inventario/$id/stock');
+      final response = await _client.post(
+        uri,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'tipo': 'entrada',
           'cantidad': cantidad,
           'motivo': motivo,
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
       
-      return json.decode(response.body);
+      if (response.body.isEmpty) {
+        return {'success': false, 'message': 'El servidor no devolvió respuesta'};
+      }
+      
+      final data = json.decode(response.body);
+      return data;
     } catch (e) {
-      return {'success': false, 'message': 'Error al agregar stock: $e'};
+      String mensajeError = 'Error al agregar stock';
+      if (e.toString().contains('Failed to fetch') || e.toString().contains('SocketException')) {
+        mensajeError = 'No se pudo conectar al servidor. Verifique que el backend está corriendo.';
+      } else if (e.toString().contains('TimeoutException')) {
+        mensajeError = 'El servidor tardó demasiado en responder';
+      }
+      return {'success': false, 'message': mensajeError};
     }
   }
   
   Future<Map<String, dynamic>> salidaStock(String id, int cantidad, {String? motivo}) async {
     try {
-      final response = await _client.patch(
-        Uri.parse('$_baseUrl/api/inventario/$id/stock'),
+      final uri = Uri.parse('$_baseUrl/api/inventario/$id/stock');
+      final response = await _client.post(
+        uri,
         headers: {'Content-Type': 'application/json'},
         body: json.encode({
           'tipo': 'salida',
           'cantidad': cantidad,
           'motivo': motivo,
         }),
-      );
+      ).timeout(const Duration(seconds: 10));
       
-      return json.decode(response.body);
+      if (response.body.isEmpty) {
+        return {'success': false, 'message': 'El servidor no devolvió respuesta'};
+      }
+      
+      final data = json.decode(response.body);
+      return data;
     } catch (e) {
-      return {'success': false, 'message': 'Error al reducir stock: $e'};
+      String mensajeError = 'Error al reducir stock';
+      if (e.toString().contains('Failed to fetch') || e.toString().contains('SocketException')) {
+        mensajeError = 'No se pudo conectar al servidor. Verifique que el backend está corriendo.';
+      } else if (e.toString().contains('TimeoutException')) {
+        mensajeError = 'El servidor tardó demasiado en responder';
+      }
+      return {'success': false, 'message': mensajeError};
     }
   }
   
