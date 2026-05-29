@@ -183,6 +183,10 @@ class InventarioController {
   
   Future<String> entradaStock(String id, int cantidad, {String? motivo}) async {
     try {
+      if (id.isEmpty) {
+        return _respuestaError('ID de producto inválido');
+      }
+      
       final producto = await _repository.obtenerProductoPorId(id);
       
       if (producto == null) {
@@ -213,6 +217,10 @@ class InventarioController {
   
   Future<String> salidaStock(String id, int cantidad, {String? motivo}) async {
     try {
+      if (id.isEmpty) {
+        return _respuestaError('ID de producto inválido');
+      }
+      
       final producto = await _repository.obtenerProductoPorId(id);
       
       if (producto == null) {
