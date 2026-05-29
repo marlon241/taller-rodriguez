@@ -6,18 +6,21 @@ import 'data/repositories/repositorio_vehiculo_impl.dart';
 import 'data/repositories/repositorio_inventario_impl.dart';
 import 'data/repositories/repositorio_oferta_impl.dart';
 import 'data/repositories/repositorio_factura_impl.dart';
+import 'data/repositories/repositorio_factura_pdf_impl.dart';
 import 'data/auth_repository_impl.dart';
 import 'domain/repositories/cliente_repository.dart';
 import 'domain/repositories/vehiculo_repository.dart';
 import 'domain/repositories/inventario_repository.dart';
 import 'domain/repositories/oferta_repository.dart';
 import 'domain/repositories/factura_repository.dart';
+import 'domain/repositories/factura_pdf_repository.dart';
 import 'domain/repositories/auth_repository.dart';
 import 'data/repositories/repositorio_proveedor_impl.dart';
 import 'domain/repositories/proveedor_repository.dart';
 import 'presentation/controllers/proveedor_controller.dart';
 import 'presentation/controllers/reportes_controller.dart';
 import 'presentation/controllers/facturacion_controller.dart';
+import 'presentation/controllers/factura_pdf_controller.dart';
 import 'presentation/controllers/auth_controller.dart';
 import 'presentation/controllers/inventario_controller.dart';
 import 'presentation/controllers/oferta_controller.dart';
@@ -58,6 +61,10 @@ void configurarDependencias() {
     () => FacturaRepositoryImpl(getIt<SupabaseDataSource>(), getIt<InventarioRepository>()),
   );
 
+  getIt.registerLazySingleton<FacturaPdfRepository>(
+    () => FacturaPdfRepositoryImpl(getIt<SupabaseDataSource>()),
+  );
+
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(getIt<SupabaseDataSource>()),
   );
@@ -69,6 +76,12 @@ void configurarDependencias() {
       inventarioRepository: getIt<InventarioRepository>(),
       ofertaRepository: getIt<OfertaRepository>(),
       facturaRepository: getIt<FacturaRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<FacturaPdfController>(
+    () => FacturaPdfController(
+      repository: getIt<FacturaPdfRepository>(),
     ),
   );
 
