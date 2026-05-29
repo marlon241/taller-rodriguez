@@ -135,25 +135,6 @@ class FacturacionApi {
     }
   }
   
-  Future<Map<String, dynamic>?> obtenerFacturaPdf(int idFactura) async {
-    try {
-      final response = await _client.get(Uri.parse('$_baseUrl/api/facturas/$idFactura/pdf')).timeout(const Duration(seconds: 10));
-      
-      if (response.statusCode != 200) {
-        return null;
-      }
-      
-      final data = json.decode(response.body);
-      
-      if (data['success'] == true && data['data'] != null) {
-        return data['data'] as Map<String, dynamic>;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-  
   Future<bool> eliminarFactura(int id) async {
     try {
       final response = await _client.delete(Uri.parse('$_baseUrl/api/facturas/$id'));
@@ -161,6 +142,20 @@ class FacturacionApi {
       return data['success'] == true;
     } catch (e) {
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>?> obtenerFacturaPdf(int idFactura) async {
+    try {
+      final response = await _client.get(Uri.parse('$_baseUrl/api/facturas/$idFactura/pdf'));
+      final data = json.decode(response.body);
+
+      if (data['success'] == true) {
+        return data['data'];
+      }
+      return null;
+    } catch (e) {
+      return null;
     }
   }
 }
