@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frontend/widgets/navigation/sidebar.dart';
 import 'package:frontend/services/facturacion_api.dart';
+import 'package:frontend/widgets/modals/dialogo_descarga_factura.dart';
 
 class FacturacionScreen extends StatefulWidget {
   const FacturacionScreen({super.key});
@@ -234,8 +235,23 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
     setState(() => _cargando = false);
     
     if (resultado != null && resultado['success'] == true) {
-      _mostrarMensaje('Factura creada exitosamente');
+      final data = resultado['data'];
+      final idFactura = data is Map ? data['id'] as int? : null;
+      
+      if (idFactura != null) {
+        final datosPdf = await _api.obtenerFacturaPdf(idFactura);
+        
+        if (datosPdf != null && mounted) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => DialogoDescargaFactura(facturaData: datosPdf),
+          );
+        }
+      }
+      
       await _limpiarFormulario();
+      
       final warnings = resultado['warnings_stock'] as List?;
       if (warnings != null && warnings.isNotEmpty) {
         final mensajes = warnings.map<String>((w) {
@@ -244,7 +260,13 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
           final stockMinimo = (w as Map<String, dynamic>)['stock_minimo'] ?? 0;
           return '$nombre: stock en $stockActual (minimo: $stockMinimo)';
         }).join('\n');
-        _mostrarMensaje('Warning: algunos productos quedaron en stock minimo:\n$mensajes', isError: true);
+        if (mounted) {
+          _mostrarMensaje('Warning: algunos productos quedaron en stock minimo:\n$mensajes', isError: true);
+        }
+      } else {
+        if (mounted) {
+          _mostrarMensaje('Factura creada exitosamente');
+        }
       }
     } else {
       _mostrarMensaje(
