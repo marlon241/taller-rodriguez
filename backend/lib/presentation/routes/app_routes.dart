@@ -3,6 +3,7 @@ import 'package:shelf/shelf.dart';
 import 'package:shelf_router/shelf_router.dart';
 import '../../injection.dart';
 import '../controllers/facturacion_controller.dart';
+import '../controllers/factura_pdf_controller.dart';
 import '../controllers/oferta_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/inventario_controller.dart';
@@ -10,6 +11,7 @@ import '../controllers/proveedor_controller.dart';
 
 class AppRoutes {
   final FacturacionController _facturacionController;
+  final FacturaPdfController _facturaPdfController;
   final OfertaController _ofertaController;
   final AuthController _authController;
   final InventarioController _inventarioController;
@@ -17,6 +19,7 @@ class AppRoutes {
 
   AppRoutes()
       : _facturacionController = getIt<FacturacionController>(),
+        _facturaPdfController = getIt<FacturaPdfController>(),
         _ofertaController = getIt<OfertaController>(),
         _authController = getIt<AuthController>(),
         _inventarioController = getIt<InventarioController>(),
@@ -47,10 +50,11 @@ class AppRoutes {
     router.get('/api/inventario/<id>', _obtenerProductoPorId);
     router.post('/api/inventario', _crearProducto);
     router.put('/api/inventario/<id>', _actualizarProducto);
-    router.patch('/api/inventario/<id>/stock', _actualizarStock);
+    router.post('/api/inventario/<id>/stock', _actualizarStock);
     router.delete('/api/inventario/<id>', _eliminarProducto);
 
     router.get('/api/facturas', _obtenerFacturas);
+    router.get('/api/facturas/<id>/pdf', _obtenerFacturaPdf);
     router.post('/api/facturas', _crearFactura);
     router.delete('/api/facturas/<id>', _eliminarFactura);
 
@@ -320,6 +324,18 @@ class AppRoutes {
       );
     }
     final resultado = await _facturacionController.eliminarFactura(idInt);
+    return Response.ok(resultado, headers: _jsonHeaders);
+  }
+
+  Future<Response> _obtenerFacturaPdf(Request request, String id) async {
+    final idInt = int.tryParse(id);
+    if (idInt == null) {
+      return Response.badRequest(
+        body: json.encode({'success': false, 'message': 'ID invalido'}),
+        headers: _jsonHeaders,
+      );
+    }
+    final resultado = await _facturaPdfController.obtenerFacturaPdf(idInt);
     return Response.ok(resultado, headers: _jsonHeaders);
   }
 
