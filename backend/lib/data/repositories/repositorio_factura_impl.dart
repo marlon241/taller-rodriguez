@@ -163,57 +163,31 @@ class FacturaRepositoryImpl implements FacturaRepository {
   
   @override
   Future<Factura> crearFactura(Factura factura) async {
-    final Map<String, dynamic> facturaData = {
-      'fecha': factura.fecha.toIso8601String(),
-      'tipo_factura': factura.tipo_factura.valor,
-      'subtotal': factura.subtotal,
-      'iva': factura.iva,
-      'descuento_porcentaje': factura.descuentoPorcentaje,
-      'descuento': factura.descuento,
-      'total': factura.total,
-      'id_cliente': factura.id_cliente,
+    final parametros = {
+      'p_fecha': factura.fecha.toIso8601String(),
+      'p_tipo_factura': factura.tipo_factura.valor,
+      'p_subtotal': factura.subtotal,
+      'p_iva': factura.iva,
+      'p_descuento_porcentaje': factura.descuentoPorcentaje,
+      'p_descuento': factura.descuento,
+      'p_total': factura.total,
+      'p_id_cliente': factura.id_cliente,
+      'p_id_oferta': factura.id_oferta,
+      'p_id_caja': factura.id_caja,
+      'p_detalles': factura.detalles.map((d) => {
+        'id_producto': d.id_producto,
+        'nombre_producto': d.nombre_producto,
+        'tipo_producto': d.tipo_producto,
+        'clasificacion': d.clasificacion,
+        'descripcion': d.descripcion,
+        'sku': d.sku,
+        'cantidad': d.cantidad,
+        'precio_unitario': d.precio_unitario,
+        'subtotal': d.subtotal,
+      }).toList(),
     };
 
-    if (factura.id_oferta != null) {
-      facturaData['id_oferta'] = factura.id_oferta;
-    }
-    if (factura.id_caja != null) {
-      facturaData['id_caja'] = factura.id_caja;
-    }
-
-    final facturaInsertada = await _dataSource.insert('facturacion', facturaData);
-    int? idFactura = facturaInsertada['id'] as int?;
-
-    if (idFactura == null && factura.id_cliente != null) {
-      final facturasRecientes = await _dataSource.select(
-        'facturacion',
-        filtros: 'id_cliente=eq.${factura.id_cliente}',
-        orderBy: 'fecha.desc',
-        limit: 1,
-      );
-      if (facturasRecientes.isNotEmpty) {
-        idFactura = facturasRecientes.first['id'] as int;
-      }
-    }
-    
-    if (idFactura == null) {
-      throw Exception('No se pudo obtener el ID de la factura insertada');
-    }
-    
-    final detallesData = factura.detalles.map((detalle) => {
-      'id_factura': idFactura,
-      'id_producto': detalle.id_producto,
-      'nombre_producto': detalle.nombre_producto,
-      'tipo_producto': detalle.tipo_producto,
-      'clasificacion': detalle.clasificacion,
-      'descripcion': detalle.descripcion,
-      'sku': detalle.sku,
-      'cantidad': detalle.cantidad,
-      'precio_unitario': detalle.precio_unitario,
-      'subtotal': detalle.subtotal,
-    }).toList();
-    
-    await _dataSource.insertMultiple('detalles_factura', detallesData);
+    final idFactura = await _dataSource.rpc('crear_factura_completa', parametros);
 
     for (final detalle in factura.detalles) {
       if (detalle.esProducto) {
@@ -222,7 +196,7 @@ class FacturaRepositoryImpl implements FacturaRepository {
     }
 
     _cargarFacturas();
-    
+
     return Factura(
         id: idFactura,
         fecha: factura.fecha,
