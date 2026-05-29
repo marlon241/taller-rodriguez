@@ -133,6 +133,34 @@ class SupabaseDataSource {
     return response.statusCode == 200 || response.statusCode == 204;
   }
 
+  Future<int> rpc(String nombreFuncion, Map<String, dynamic> parametros) async {
+    final url = Uri.parse('$_baseUrl/rest/v1/rpc/$nombreFuncion');
+
+    final response = await _client.post(
+      url,
+      headers: _headers,
+      body: _encodeJson(parametros),
+    );
+
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.body.isEmpty) {
+        throw Exception('RPC $nombreFuncion no devolvio resultado');
+      }
+      final dynamic decoded = jsonDecode(response.body);
+      if (decoded is int) {
+        return decoded;
+      }
+      if (decoded is Map && decoded.containsKey('id')) {
+        return decoded['id'] as int;
+      }
+      throw Exception('RPC $nombreFuncion devolvio formato inesperado: $response.body');
+    }
+
+    throw Exception(
+      'Error en RPC $nombreFuncion: ${response.statusCode} - ${response.body}',
+    );
+  }
+
   Future<List<Map<String, dynamic>>> getDocuments(
     String coleccion, {
     String? filtros,
