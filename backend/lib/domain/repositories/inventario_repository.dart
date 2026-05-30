@@ -14,6 +14,7 @@ abstract class InventarioRepository {
     String? idProveedor,
     String? clasificacion,
     String? ordenStock,
+    String? ordenTipo,
   });
 
   Future<Producto> crearProducto(Producto producto);

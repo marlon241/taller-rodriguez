@@ -18,7 +18,7 @@ class InventarioRepositoryImpl implements InventarioRepository {
   
   Future<void> _cargarInventario() async {
     try {
-      final datos = await _dataSource.select('inventario', orderBy: 'stock.asc');
+      final datos = await _dataSource.select('inventario', orderBy: 'id.asc');
       final productos = datos
           .map((json) => Producto.fromJson(json['id'].toString(), json))
           .toList();
@@ -87,12 +87,14 @@ class InventarioRepositoryImpl implements InventarioRepository {
     String? idProveedor,
     String? clasificacion,
     String? ordenStock,
+    String? ordenTipo,
   }) {
     _buscarInventario(
       query,
       idProveedor: idProveedor,
       clasificacion: clasificacion,
       ordenStock: ordenStock,
+      ordenTipo: ordenTipo,
     );
     return _inventarioController.stream;
   }
@@ -102,6 +104,7 @@ class InventarioRepositoryImpl implements InventarioRepository {
     String? idProveedor,
     String? clasificacion,
     String? ordenStock,
+    String? ordenTipo,
   }) async {
     try {
       var filtros = '';
@@ -121,10 +124,12 @@ class InventarioRepositoryImpl implements InventarioRepository {
       }
 
       String? orden;
-      if (ordenStock == 'asc') {
-        orden = 'stock.asc';
-      } else if (ordenStock == 'desc') {
-        orden = 'stock.desc';
+      if (ordenStock != null && ordenTipo != null) {
+        orden = 'tipo.${ordenTipo},stock.${ordenStock}';
+      } else if (ordenStock != null) {
+        orden = 'stock.${ordenStock}';
+      } else if (ordenTipo != null) {
+        orden = 'tipo.${ordenTipo}';
       }
 
       final datos = await _dataSource.select('inventario', filtros: filtros, orderBy: orden);

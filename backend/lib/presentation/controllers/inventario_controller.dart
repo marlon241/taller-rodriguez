@@ -16,6 +16,7 @@ class InventarioController {
     String? idProveedor,
     String? clasificacion,
     String? ordenStock,
+    String? ordenTipo,
   }) async {
     try {
       Stream<List<Producto>> stream;
@@ -23,7 +24,8 @@ class InventarioController {
       final tieneFiltros = (idProveedor != null && idProveedor.isNotEmpty) ||
                            (clasificacion != null && clasificacion.isNotEmpty) ||
                            (busqueda != null && busqueda.isNotEmpty) ||
-                           (ordenStock != null && ordenStock.isNotEmpty);
+                           (ordenStock != null && ordenStock.isNotEmpty) ||
+                           (ordenTipo != null && ordenTipo.isNotEmpty);
 
       if (tieneFiltros) {
         stream = _repository.buscarInventario(
@@ -31,6 +33,7 @@ class InventarioController {
           idProveedor: idProveedor,
           clasificacion: clasificacion,
           ordenStock: ordenStock,
+          ordenTipo: ordenTipo,
         );
       } else {
         stream = _repository.obtenerInventario();

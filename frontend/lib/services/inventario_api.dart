@@ -13,6 +13,7 @@ class InventarioApi {
     String? idProveedor,
     String? clasificacion,
     String? ordenStock,
+    String? ordenTipo,
   }) async {
     try {
       final params = <String>[];
@@ -27,6 +28,9 @@ class InventarioApi {
       }
       if (ordenStock != null && ordenStock.isNotEmpty) {
         params.add('ordenStock=${Uri.encodeComponent(ordenStock)}');
+      }
+      if (ordenTipo != null && ordenTipo.isNotEmpty) {
+        params.add('ordenTipo=${Uri.encodeComponent(ordenTipo)}');
       }
 
       String url = '$_baseUrl/api/inventario';

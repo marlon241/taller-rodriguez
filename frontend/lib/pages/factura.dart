@@ -23,6 +23,10 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
   
   List<Map<String, dynamic>> _itemsFactura = [];
   
+  String? _ordenTipo;
+  String? _ordenStock;
+  String? _ordenPrecio;
+  
   int? _clienteSeleccionado;
   int? _vehiculoSeleccionado;
   String _tipoFactura = 'Consumidor Final';
@@ -108,13 +112,76 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
   }
 
   Future<void> _buscarInventario(String query) async {
+    List<Map<String, dynamic>> inventario;
     if (query.isEmpty) {
-      final inventario = await _api.obtenerInventario();
-      setState(() => _inventario = inventario);
+      inventario = await _api.obtenerInventario();
     } else {
-      final inventario = await _api.obtenerInventario(busqueda: query);
-      setState(() => _inventario = inventario);
+      inventario = await _api.obtenerInventario(busqueda: query);
     }
+    setState(() {
+      _inventario = inventario;
+      _aplicarOrdenamiento();
+    });
+  }
+
+  void _aplicarOrdenamiento() {
+    if (_ordenTipo == null && _ordenStock == null && _ordenPrecio == null) return;
+    
+    _inventario.sort((a, b) {
+      int resultado = 0;
+      
+      if (_ordenTipo != null) {
+        resultado = a['tipo'].toString().toLowerCase().compareTo(b['tipo'].toString().toLowerCase());
+        if (resultado != 0) return _ordenTipo == 'asc' ? resultado : -resultado;
+      }
+      
+      if (_ordenStock != null) {
+        resultado = (a['stock'] as int? ?? 0).compareTo(b['stock'] as int? ?? 0);
+        if (resultado != 0) return _ordenStock == 'asc' ? resultado : -resultado;
+      }
+      
+      if (_ordenPrecio != null) {
+        resultado = (a['precio_venta'] as num).toDouble().compareTo((b['precio_venta'] as num).toDouble());
+        if (resultado != 0) return _ordenPrecio == 'asc' ? resultado : -resultado;
+      }
+      
+      return resultado;
+    });
+  }
+
+  void _toggleOrden(String tipoOrden) {
+    setState(() {
+      switch (tipoOrden) {
+        case 'tipo':
+          if (_ordenTipo == null) {
+            _ordenTipo = 'asc';
+          } else if (_ordenTipo == 'asc') {
+            _ordenTipo = 'desc';
+          } else {
+            _ordenTipo = null;
+          }
+          break;
+        case 'stock':
+          if (_ordenStock == null) {
+            _ordenStock = 'asc';
+          } else if (_ordenStock == 'asc') {
+            _ordenStock = 'desc';
+          } else {
+            _ordenStock = null;
+          }
+          break;
+        case 'precio':
+          if (_ordenPrecio == null) {
+            _ordenPrecio = 'asc';
+          } else if (_ordenPrecio == 'asc') {
+            _ordenPrecio = 'desc';
+          } else {
+            _ordenPrecio = null;
+          }
+          break;
+      }
+      _aplicarOrdenamiento();
+    });
   }
 
   void _agregarItem(Map<String, dynamic> producto) {
@@ -287,10 +354,7 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
       _calcularTotales();
     });
 
-    final inventario = await _api.obtenerInventario();
-    setState(() {
-      _inventario = inventario;
-    });
+    await _buscarInventario('');
     _descuentoController.clear();
     _busquedaController.clear();
   }
@@ -647,13 +711,13 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
                       topRight: Radius.circular(12),
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Expanded(flex: 1, child: Text("ID", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                      Expanded(flex: 2, child: Text("PRECIO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                      Expanded(flex: 3, child: Text("NOMBRE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                      Expanded(flex: 2, child: Text("TIPO", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
-                      Expanded(flex: 1, child: Text("STOCK", textAlign: TextAlign.right, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                      const Expanded(flex: 1, child: Text("ID", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                      Expanded(flex: 2, child: _buildSortableHeader("PRECIO", Icons.attach_money, 'precio', _ordenPrecio)),
+                      const Expanded(flex: 3, child: Text("NOMBRE", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12))),
+                      Expanded(flex: 2, child: _buildSortableHeader("TIPO", Icons.category, 'tipo', _ordenTipo)),
+                      Expanded(flex: 1, child: _buildSortableHeader("STOCK", Icons.inventory_2, 'stock', _ordenStock, alignRight: true)),
                     ],
                   ),
                 ),
@@ -732,6 +796,28 @@ class _FacturacionScreenState extends State<FacturacionScreen> {
         Text(label, style: TextStyle(fontSize: isTotal ? 17 : 14, fontWeight: isTotal ? FontWeight.bold : FontWeight.w500)),
         Text(value, style: TextStyle(fontSize: isTotal ? 20 : 14, fontWeight: FontWeight.bold, color: isTotal ? Colors.red : Colors.black)),
       ],
+    );
+  }
+
+  Widget _buildSortableHeader(String label, IconData icon, String ordenTipo, String? ordenActual, {bool alignRight = false}) {
+    return GestureDetector(
+      onTap: () => _toggleOrden(ordenTipo),
+      child: Row(
+        mainAxisAlignment: alignRight ? MainAxisAlignment.end : MainAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+          const SizedBox(width: 4),
+          Icon(
+            ordenActual == 'asc'
+                ? Icons.arrow_downward
+                : ordenActual == 'desc'
+                    ? Icons.arrow_upward
+                    : Icons.unfold_more,
+            size: 16,
+            color: Colors.red,
+          ),
+        ],
+      ),
     );
   }
 

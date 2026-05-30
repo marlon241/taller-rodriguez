@@ -200,11 +200,13 @@ class AppRoutes {
     final idProveedor = request.url.queryParameters['idProveedor'];
     final clasificacion = request.url.queryParameters['clasificacion'];
     final ordenStock = request.url.queryParameters['ordenStock'];
+    final ordenTipo = request.url.queryParameters['ordenTipo'];
     final resultado = await _inventarioController.obtenerInventario(
       busqueda: busqueda,
       idProveedor: idProveedor,
       clasificacion: clasificacion,
       ordenStock: ordenStock,
+      ordenTipo: ordenTipo,
     );
     return Response.ok(resultado, headers: _jsonHeaders);
   }

@@ -23,6 +23,7 @@ class InventarioPageState extends State<InventarioPage> {
   String? _filtroProducto;
   String? _filtroProveedor;
   String? _ordenStock;
+  String? _ordenTipo;
   final InventarioApi _api = InventarioApi();
   final ProveedorApi _proveedorApi = ProveedorApi();
   bool _cargando = false;
@@ -55,7 +56,7 @@ class InventarioPageState extends State<InventarioPage> {
   Future<void> _cargarProductos({String? busqueda}) async {
     setState(() => _cargando = true);
     final textoBusqueda = busqueda ?? _searchController.text.trim();
-    _hayFiltrosActivos = textoBusqueda.isNotEmpty || _filtroProducto != null || _filtroProveedor != null || _ordenStock != null;
+    _hayFiltrosActivos = textoBusqueda.isNotEmpty || _filtroProducto != null || _filtroProveedor != null || _ordenStock != null || _ordenTipo != null;
 
     String? idProveedor;
     if (_filtroProveedor != null && _filtroProveedor!.isNotEmpty) {
@@ -71,6 +72,7 @@ class InventarioPageState extends State<InventarioPage> {
       idProveedor: idProveedor,
       clasificacion: _filtroProducto,
       ordenStock: _ordenStock,
+      ordenTipo: _ordenTipo,
     );
     setState(() {
       _productos = productos;
@@ -308,6 +310,7 @@ class InventarioPageState extends State<InventarioPage> {
                                       _filtroProducto = null;
                                       _filtroProveedor = null;
                                       _ordenStock = null;
+                                      _ordenTipo = null;
                                       _hayFiltrosActivos = false;
                                     });
                                     _cargarProductos();
@@ -329,6 +332,7 @@ class InventarioPageState extends State<InventarioPage> {
                                       _filtroProducto = null;
                                       _filtroProveedor = null;
                                       _ordenStock = null;
+                                      _ordenTipo = null;
                                       _hayFiltrosActivos = false;
                                     });
                                     _cargarProductos();
@@ -442,7 +446,37 @@ Widget _buildTableHeader() {
         children: [
           const Expanded(child: Text('Id', style: style)),
           const Expanded(child: Text('Producto', style: style)),
-          const Expanded(child: Text('Tipo', style: style)),
+          Expanded(
+            child: Row(
+              children: [
+                const Text('Tipo', style: style),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      if (_ordenTipo == 'asc') {
+                        _ordenTipo = 'desc';
+                      } else if (_ordenTipo == 'desc') {
+                        _ordenTipo = null;
+                      } else {
+                        _ordenTipo = 'asc';
+                      }
+                    });
+                    _cargarProductos();
+                  },
+                  child: Icon(
+                    _ordenTipo == 'asc'
+                        ? Icons.arrow_downward
+                        : _ordenTipo == 'desc'
+                            ? Icons.arrow_upward
+                            : Icons.unfold_more,
+                    size: 16,
+                    color: _headerColor,
+                  ),
+                ),
+              ],
+            ),
+          ),
           Expanded(
             child: Row(
               children: [
