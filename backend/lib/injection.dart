@@ -7,6 +7,7 @@ import 'data/repositories/repositorio_inventario_impl.dart';
 import 'data/repositories/repositorio_oferta_impl.dart';
 import 'data/repositories/repositorio_factura_impl.dart';
 import 'data/repositories/repositorio_factura_pdf_impl.dart';
+import 'data/repositories/repositorio_empleado_impl.dart';
 import 'data/auth_repository_impl.dart';
 import 'domain/repositories/cliente_repository.dart';
 import 'domain/repositories/vehiculo_repository.dart';
@@ -15,6 +16,7 @@ import 'domain/repositories/oferta_repository.dart';
 import 'domain/repositories/factura_repository.dart';
 import 'domain/repositories/factura_pdf_repository.dart';
 import 'domain/repositories/auth_repository.dart';
+import 'domain/repositories/empleado_repository.dart';
 import 'data/repositories/repositorio_proveedor_impl.dart';
 import 'domain/repositories/proveedor_repository.dart';
 import 'presentation/controllers/proveedor_controller.dart';
@@ -43,6 +45,10 @@ void configurarDependencias() {
 
   getIt.registerLazySingleton<VehiculoRepository>(
     () => VehiculoRepositoryImpl(getIt<SupabaseDataSource>()),
+  );
+
+  getIt.registerLazySingleton<EmpleadoRepository>(
+    () => EmpleadoRepositoryImpl(getIt<SupabaseDataSource>()),
   );
 
   getIt.registerLazySingleton<InventarioRepository>(
@@ -120,6 +126,8 @@ void configurarDependencias() {
   getIt.registerFactory<VehiculoController>(
     () => VehiculoController(
       vehiculoRepository: getIt<VehiculoRepository>(),
+      clienteRepository: getIt<ClienteRepository>(),
+      empleadoRepository: getIt<EmpleadoRepository>(),
     ),
   );
 }

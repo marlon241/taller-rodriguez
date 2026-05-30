@@ -1,12 +1,21 @@
 import 'dart:convert';
 import '../../domain/repositories/vehiculo_repository.dart';
+import '../../domain/repositories/cliente_repository.dart';
+import '../../domain/repositories/empleado_repository.dart';
 import '../../domain/entities/vehiculo.dart';
 
 class VehiculoController {
   final VehiculoRepository _vehiculoRepository;
+  final ClienteRepository _clienteRepository;
+  final EmpleadoRepository _empleadoRepository;
 
-  VehiculoController({required VehiculoRepository vehiculoRepository})
-      : _vehiculoRepository = vehiculoRepository;
+  VehiculoController({
+    required VehiculoRepository vehiculoRepository,
+    required ClienteRepository clienteRepository,
+    required EmpleadoRepository empleadoRepository,
+  })  : _vehiculoRepository = vehiculoRepository,
+        _clienteRepository = clienteRepository,
+        _empleadoRepository = empleadoRepository;
 
   Future<String> obtenerVehiculos({String? estado, bool entregados = false}) async {
     try {
@@ -21,8 +30,9 @@ class VehiculoController {
         }
       }).toList();
 
-      return _respuestaExitosa(
-        filtrados.map((v) => {
+      final List<Map<String, dynamic>> vehiculosConRelaciones = [];
+      for (final v in filtrados) {
+        final Map<String, dynamic> vehiculoMap = {
           'id': v.id,
           'modelo': v.modelo,
           'marca': v.marca,
@@ -36,8 +46,24 @@ class VehiculoController {
           'id_empleado': v.id_empleado,
           'url_imagen_vehiculo': v.urlImagenVehiculo,
           'url_tarjeta_circulacion': v.urlTarjetaCirculacion,
-        }).toList(),
-      );
+        };
+        if (v.id_cliente != null) {
+          final cliente = await _clienteRepository.obtenerClientePorId(v.id_cliente!);
+          if (cliente != null) {
+            vehiculoMap['cliente_nombre'] = cliente.nombre;
+            vehiculoMap['cliente_dui'] = cliente.dui;
+          }
+        }
+        if (v.id_empleado != null) {
+          final empleado = await _empleadoRepository.obtenerEmpleadoPorId(v.id_empleado!);
+          if (empleado != null) {
+            vehiculoMap['empleado_nombre'] = empleado.nombre;
+          }
+        }
+        vehiculosConRelaciones.add(vehiculoMap);
+      }
+
+      return _respuestaExitosa(vehiculosConRelaciones);
     } catch (e) {
       return _respuestaError('Error al obtener vehículos: $e');
     }
@@ -47,7 +73,8 @@ class VehiculoController {
     try {
       final vehiculo = await _vehiculoRepository.obtenerVehiculoPorId(id);
       if (vehiculo == null) return _respuestaError('Vehículo no encontrado');
-      return _respuestaExitosa({
+
+      final Map<String, dynamic> vehiculoMap = {
         'id': vehiculo.id,
         'modelo': vehiculo.modelo,
         'marca': vehiculo.marca,
@@ -61,7 +88,23 @@ class VehiculoController {
         'id_empleado': vehiculo.id_empleado,
         'url_imagen_vehiculo': vehiculo.urlImagenVehiculo,
         'url_tarjeta_circulacion': vehiculo.urlTarjetaCirculacion,
-      });
+      };
+
+      if (vehiculo.id_cliente != null) {
+        final cliente = await _clienteRepository.obtenerClientePorId(vehiculo.id_cliente!);
+        if (cliente != null) {
+          vehiculoMap['cliente_nombre'] = cliente.nombre;
+          vehiculoMap['cliente_dui'] = cliente.dui;
+        }
+      }
+      if (vehiculo.id_empleado != null) {
+        final empleado = await _empleadoRepository.obtenerEmpleadoPorId(vehiculo.id_empleado!);
+        if (empleado != null) {
+          vehiculoMap['empleado_nombre'] = empleado.nombre;
+        }
+      }
+
+      return _respuestaExitosa(vehiculoMap);
     } catch (e) {
       return _respuestaError('Error al obtener vehículo: $e');
     }
