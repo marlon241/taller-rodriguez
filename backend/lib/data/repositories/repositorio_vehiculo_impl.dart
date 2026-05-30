@@ -22,11 +22,24 @@ class VehiculoRepositoryImpl implements VehiculoRepository {
         'vehiculos',
         orderBy: 'fecha_ingreso.desc',
       );
-      
+
       final vehiculos = datos.map((json) => Vehiculo.fromJson(json)).toList();
       _vehiculosController.add(vehiculos);
     } catch (e) {
       _vehiculosController.addError(e);
+    }
+  }
+
+  Future<Map<String, dynamic>?> _obtenerDatosCliente(int idCliente) async {
+    try {
+      final datos = await _dataSource.select(
+        'clientes',
+        filtros: 'id=eq.$idCliente',
+      );
+      if (datos.isEmpty) return null;
+      return datos.first;
+    } catch (e) {
+      return null;
     }
   }
   

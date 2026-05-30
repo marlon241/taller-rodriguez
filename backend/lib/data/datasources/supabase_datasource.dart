@@ -27,11 +27,15 @@ class SupabaseDataSource {
     String? filtros,
     String? orderBy,
     int? limit,
+    String? select,
   }) async {
     String queryParams = '';
 
+    if (select != null && select.isNotEmpty) {
+      queryParams = '?select=$select';
+    }
     if (filtros != null && filtros.isNotEmpty) {
-      queryParams = '?$filtros';
+      queryParams += queryParams.isEmpty ? '?$filtros' : '&$filtros';
     }
     if (orderBy != null && orderBy.isNotEmpty) {
       queryParams += queryParams.isEmpty ? '?order=$orderBy' : '&order=$orderBy';
