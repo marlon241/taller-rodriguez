@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../models/cliente.dart';
+import '../../models/empleado_back.dart';
+import '../../services/cliente_service.dart';
+import '../../services/Empleado_service.dart';
 import '../../services/vehiculo_service.dart';
 
 class AgregarVehiculoModal extends StatefulWidget {
@@ -22,14 +26,57 @@ class _AgregarVehiculoModalState extends State<AgregarVehiculoModal> {
   final TextEditingController _fechaSalidaCtrl = TextEditingController();
   final TextEditingController _diagnosticoCtrl = TextEditingController();
 
-  String? _cliente;
-  String? _empleadoAsignado;
+  List<Cliente> _clientes = [];
+  Cliente? _clienteSeleccionado;
+  List<Empleado> _empleados = [];
+  Empleado? _empleadoSeleccionado;
   String? _estado;
 
   XFile? _imagenVehiculo;
   XFile? _imagenTarjeta;
   bool _subiendoImagen = false;
   bool _guardando = false;
+  bool _cargandoClientes = true;
+  bool _cargandoEmpleados = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarClientes();
+    _cargarEmpleados();
+  }
+
+  Future<void> _cargarClientes() async {
+    try {
+      final clientes = await ClienteService.getAll();
+      if (mounted) {
+        setState(() {
+          _clientes = clientes.where((c) => c.estado).toList();
+          _cargandoClientes = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cargandoClientes = false);
+      }
+    }
+  }
+
+  Future<void> _cargarEmpleados() async {
+    try {
+      final empleados = await EmpleadoService.getAll();
+      if (mounted) {
+        setState(() {
+          _empleados = empleados.where((e) => e.estado).toList();
+          _cargandoEmpleados = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _cargandoEmpleados = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -100,6 +147,8 @@ class _AgregarVehiculoModalState extends State<AgregarVehiculoModal> {
       'estado': _estado ?? 'En revisión',
       'fecha_ingreso': _fechaIngresoCtrl.text.isNotEmpty ? _parseFecha(_fechaIngresoCtrl.text) : DateTime.now().toIso8601String(),
       'fecha_salida': _fechaSalidaCtrl.text.isNotEmpty ? _parseFecha(_fechaSalidaCtrl.text) : null,
+      if (_clienteSeleccionado != null) 'id_cliente': _clienteSeleccionado!.id,
+      if (_empleadoSeleccionado != null) 'id_empleado': _empleadoSeleccionado!.id,
       if (urlVehiculo != null) 'url_imagen_vehiculo': urlVehiculo,
       if (urlTarjeta != null) 'url_tarjeta_circulacion': urlTarjeta,
     };
@@ -169,23 +218,35 @@ class _AgregarVehiculoModalState extends State<AgregarVehiculoModal> {
                 isWide
                     ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          _buildDropdown("Cliente", _cliente, ["Juan Pérez", "María Gómez", "Jared Amaya"], (val) => setState(() => _cliente = val)),
+                          _buildClienteDropdown(),
                           const SizedBox(height: 8),
-                          OutlinedButton(onPressed: () {}, child: const Text("Agregar cliente nuevo")),
+                          OutlinedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.pushNamed(context, '/clientes');
+                            },
+                            child: const Text("Agregar cliente nuevo"),
+                          ),
                         ])),
                         const SizedBox(width: 16),
                         Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                          _buildDropdown("Empleado asignado", _empleadoAsignado, ["Carlos López", "Ana Martínez", "Pedro Ramírez"], (val) => setState(() => _empleadoAsignado = val)),
+                          _buildEmpleadoDropdown(),
                           const SizedBox(height: 8),
-                          OutlinedButton(onPressed: () {}, child: const Text("Agregar empleado nuevo")),
+                          OutlinedButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              Navigator.pushNamed(context, '/empleados');
+                            },
+                            child: const Text("Agregar empleado nuevo"),
+                          ),
                         ])),
                         const SizedBox(width: 16),
                         Expanded(child: _buildDropdown("Estado", _estado, ["En revisión", "Reparando", "Listo"], (val) => setState(() => _estado = val))),
                       ])
                     : Column(children: [
-                        _buildDropdown("Cliente", _cliente, ["Juan Pérez", "María Gómez", "Jared Amaya"], (val) => setState(() => _cliente = val)),
+                        _buildClienteDropdown(),
                         const SizedBox(height: 14),
-                        _buildDropdown("Empleado asignado", _empleadoAsignado, ["Carlos López", "Ana Martínez", "Pedro Ramírez"], (val) => setState(() => _empleadoAsignado = val)),
+                        _buildEmpleadoDropdown(),
                         const SizedBox(height: 14),
                         _buildDropdown("Estado", _estado, ["En revisión", "Reparando", "Listo"], (val) => setState(() => _estado = val)),
                       ]),
@@ -292,6 +353,80 @@ class _AgregarVehiculoModalState extends State<AgregarVehiculoModal> {
         items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
         onChanged: onChanged,
       ),
+    ]);
+  }
+
+  Widget _buildClienteDropdown() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text("Cliente", style: TextStyle(fontWeight: FontWeight.w600)),
+      const SizedBox(height: 6),
+      _cargandoClientes
+          ? DropdownButtonFormField<String>(
+              value: null,
+              hint: const Text("Cargando clientes..."),
+              isExpanded: true,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              items: const [],
+              onChanged: null,
+            )
+          : DropdownButtonFormField<Cliente>(
+              value: _clienteSeleccionado,
+              hint: const Text("Seleccionar cliente"),
+              isExpanded: true,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              items: _clientes.map((cliente) {
+                return DropdownMenuItem<Cliente>(
+                  value: cliente,
+                  child: Text(cliente.nombre),
+                );
+              }).toList(),
+              onChanged: (cliente) {
+                setState(() => _clienteSeleccionado = cliente);
+              },
+            ),
+    ]);
+  }
+
+  Widget _buildEmpleadoDropdown() {
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      const Text("Empleado asignado", style: TextStyle(fontWeight: FontWeight.w600)),
+      const SizedBox(height: 6),
+      _cargandoEmpleados
+          ? DropdownButtonFormField<String>(
+              value: null,
+              hint: const Text("Cargando empleados..."),
+              isExpanded: true,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              items: const [],
+              onChanged: null,
+            )
+          : DropdownButtonFormField<Empleado>(
+              value: _empleadoSeleccionado,
+              hint: const Text("Seleccionar empleado"),
+              isExpanded: true,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              items: _empleados.map((empleado) {
+                return DropdownMenuItem<Empleado>(
+                  value: empleado,
+                  child: Text(empleado.nombre),
+                );
+              }).toList(),
+              onChanged: (empleado) {
+                setState(() => _empleadoSeleccionado = empleado);
+              },
+            ),
     ]);
   }
 
