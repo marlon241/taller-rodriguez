@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:frontend/models/cliente.dart';
 
@@ -6,7 +7,15 @@ class ClienteService {
 
   static Future<List<Cliente>> getAll() async {
     final data = await _db.select().order('nombre', ascending: true);
-    return (data as List).map((e) => Cliente.fromJson(e)).toList();
+    final List<Cliente> clientes = [];
+    for (final item in data as List) {
+      try {
+        clientes.add(Cliente.fromJson(item));
+      } catch (e) {
+        debugPrint('Error al parsear cliente: $e - datos: $item');
+      }
+    }
+    return clientes;
   }
 
   static Future<void> create(Cliente cliente) async {
