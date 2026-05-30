@@ -9,6 +9,9 @@ class VisualizarVehiculoModal extends StatelessWidget {
   Widget build(BuildContext context) {
     final urlImagenVehiculo = vehiculo['url_imagen_vehiculo'] as String?;
     final urlTarjeta = vehiculo['url_tarjeta_circulacion'] as String?;
+    final nombreCliente = vehiculo['cliente_nombre'] as String?;
+    final duiCliente = vehiculo['cliente_dui'] as String?;
+    final nombreEmpleado = vehiculo['empleado_nombre'] as String?;
 
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -20,7 +23,6 @@ class VisualizarVehiculoModal extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Título
               Row(
                 children: [
                   const Expanded(
@@ -38,11 +40,9 @@ class VisualizarVehiculoModal extends StatelessWidget {
               const Divider(),
               const SizedBox(height: 16),
 
-              // Info principal
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Imagen del vehículo
                   Container(
                     width: 200,
                     height: 150,
@@ -68,7 +68,6 @@ class VisualizarVehiculoModal extends StatelessWidget {
                   ),
                   const SizedBox(width: 20),
 
-                  // Datos básicos
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -78,6 +77,9 @@ class VisualizarVehiculoModal extends StatelessWidget {
                           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
+                        if (nombreCliente != null) _infoRow(Icons.person, 'Cliente', nombreCliente),
+                        if (duiCliente != null) _infoRow(Icons.badge, 'DUI', duiCliente),
+                        if (nombreEmpleado != null) _infoRow(Icons.work, 'Empleado asignado', nombreEmpleado),
                         _infoRow(Icons.confirmation_number, 'Placa', vehiculo['placa'] ?? '-'),
                         _infoRow(Icons.calendar_today, 'Año', '${vehiculo['anio'] ?? '-'}'),
                         _infoRow(Icons.info_outline, 'Estado', vehiculo['estado'] ?? '-'),
@@ -91,7 +93,6 @@ class VisualizarVehiculoModal extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              // Diagnóstico
               if (vehiculo['diagnostico'] != null && vehiculo['diagnostico'].toString().isNotEmpty) ...[
                 const Text('Diagnóstico', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 8),
@@ -111,7 +112,6 @@ class VisualizarVehiculoModal extends StatelessWidget {
                 const SizedBox(height: 20),
               ],
 
-              // Tarjeta de circulación
               if (urlTarjeta != null) ...[
                 const Text('Tarjeta de Circulación', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
                 const SizedBox(height: 8),
@@ -137,7 +137,6 @@ class VisualizarVehiculoModal extends StatelessWidget {
                 const SizedBox(height: 20),
               ],
 
-              // Botón cerrar
               Center(
                 child: SizedBox(
                   width: 200,
