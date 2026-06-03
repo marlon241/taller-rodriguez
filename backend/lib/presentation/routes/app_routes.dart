@@ -8,6 +8,7 @@ import '../controllers/oferta_controller.dart';
 import '../controllers/auth_controller.dart';
 import '../controllers/inventario_controller.dart';
 import '../controllers/proveedor_controller.dart';
+import '../controllers/diagnostico_controller.dart';
 
 class AppRoutes {
   final FacturacionController _facturacionController;
@@ -16,6 +17,7 @@ class AppRoutes {
   final AuthController _authController;
   final InventarioController _inventarioController;
   final ProveedorController _proveedorController;
+  final DiagnosticoController _diagnosticoController;
 
   AppRoutes()
       : _facturacionController = getIt<FacturacionController>(),
@@ -23,8 +25,9 @@ class AppRoutes {
         _ofertaController = getIt<OfertaController>(),
         _authController = getIt<AuthController>(),
         _inventarioController = getIt<InventarioController>(),
-        _proveedorController = getIt<ProveedorController>();
-  
+        _proveedorController = getIt<ProveedorController>(),
+        _diagnosticoController = getIt<DiagnosticoController>();
+
   Router get router {
     final router = Router();
 
@@ -62,7 +65,11 @@ class AppRoutes {
     router.get('/api/proveedores/<id>', _obtenerProveedorPorId);
     router.post('/api/proveedores', _crearProveedor);
     router.put('/api/proveedores/<id>', _actualizarProveedor);
-    router.delete('/api/proveedores/<id>', _eliminarProveedor);
+router.delete('/api/proveedores/<id>', _eliminarProveedor);
+
+    router.get('/api/diagnostico/clientes', _diagnosticarClientes);
+    router.get('/api/diagnostico/estructura', _diagnosticarEstructura);
+    router.get('/api/diagnostico/proveedores', _diagnosticarProveedores);
 
     router.all('/<path|.*>', _rutaNoEncontrada);
 
@@ -437,6 +444,21 @@ class AppRoutes {
         headers: _jsonHeaders,
       );
     }
+  }
+
+  Future<Response> _diagnosticarClientes(Request request) async {
+    final resultado = await _diagnosticoController.diagnosticarTablaClientes();
+    return Response.ok(resultado, headers: _jsonHeaders);
+  }
+
+  Future<Response> _diagnosticarEstructura(Request request) async {
+    final resultado = await _diagnosticoController.diagnosticarEstructura();
+    return Response.ok(resultado, headers: _jsonHeaders);
+  }
+
+  Future<Response> _diagnosticarProveedores(Request request) async {
+    final resultado = await _diagnosticoController.diagnosticarTablaProveedores();
+    return Response.ok(resultado, headers: _jsonHeaders);
   }
 
   Future<Response> _rutaNoEncontrada(Request request) async {

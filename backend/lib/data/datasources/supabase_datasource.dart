@@ -77,7 +77,12 @@ class SupabaseDataSource {
     );
 
     if (response.statusCode == 201 || response.statusCode == 200) {
-      if (response.body.isEmpty) return data;
+      if (response.body.isEmpty) {
+        if (data.containsKey('id')) {
+          return {'id': data['id']};
+        }
+        return data;
+      }
       return _parseJson(response.body).first;
     }
 

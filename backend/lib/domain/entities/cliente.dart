@@ -39,13 +39,31 @@ class Cliente extends Equatable {
       correo: json['correo'] as String? ?? '',
       direccion: json['direccion'] as String? ?? '',
       frecuencia_visita: json['frecuencia_visita'] as String? ?? 'Regular',
-      estado: json['estado'] as bool? ?? true,
-      fecha_registro: json['fecha_registro'] != null 
-          ? DateTime.tryParse(json['fecha_registro'].toString()) 
+      estado: _parsearBool(json['estado']),
+      fecha_registro: json['fecha_registro'] != null
+          ? DateTime.tryParse(json['fecha_registro'].toString())
           : null,
-      nit: json['nit'] as int?,
-      nrc: json['nrc'] as int?,
+      nit: _parsearInt(json['nit']),
+      nrc: _parsearInt(json['nrc']),
     );
+  }
+
+  static bool _parsearBool(dynamic valor) {
+    if (valor == null) return true;
+    if (valor is bool) return valor;
+    if (valor is String) return valor == 'true' || valor == '1' || valor.toLowerCase() == 'activo';
+    if (valor is num) return valor != 0;
+    return true;
+  }
+
+  static int? _parsearInt(dynamic valor) {
+    if (valor == null) return null;
+    if (valor is int) return valor;
+    if (valor is num) return valor.toInt();
+    if (valor is String && valor.isNotEmpty) {
+      return int.tryParse(valor);
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {
